@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>עדכונים ופרסומות</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a1a;
+    color: #fff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: linear-gradient(135deg, #1a1a3e, #2d2d6b);
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid #4a4aff;
+    flex-shrink: 0;
+  }
+  header h1 { font-size: 1.8rem; font-weight: 700; }
+  .clock { font-size: 2.2rem; font-weight: 300; color: #4a9eff; letter-spacing: 4px; }
+
+  .main-content {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 55% 45%;
+    gap: 0;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* צד שמאל — פרסומות */
+  .ads-panel {
+    border-left: 2px solid #2a2a5a;
+    position: relative;
+    overflow: hidden;
+    background: #050510;
+  }
+  .ads-panel .panel-label {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(74,74,255,0.8);
+    color: #fff;
+    font-size: 0.8rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    z-index: 10;
+    letter-spacing: 1px;
+  }
+  .ad-slide {
+    width: 100%;
+    height: 100%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 24px;
+  }
+  .ad-slide.active { display: flex; }
+  .ad-slide img {
+    max-width: 100%;
+    max-height: 85%;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+  .ad-slide video {
+    max-width: 100%;
+    max-height: 85%;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+  .ad-title {
+    margin-top: 12px;
+    font-size: 1.1rem;
+    color: #ccc;
+    text-align: center;
+  }
+  .no-ads {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #444;
+    font-size: 1.1rem;
+  }
+  .ad-dots {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+  }
+  .ad-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #444;
+    transition: background 0.3s;
+  }
+  .ad-dot.active { background: #4a4aff; }
+
+  /* צד ימין — עדכוני בניין */
+  .updates-panel {
+    background: #08081e;
+    padding: 24px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .updates-panel h2 {
+    font-size: 1.2rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #2a2a5a;
+    flex-shrink: 0;
+  }
+  .updates-list {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .update-card {
+    background: linear-gradient(135deg, #12122a, #1a1a3e);
+    border: 1px solid #2a2a5a;
+    border-right: 4px solid #4a4aff;
+    border-radius: 10px;
+    padding: 16px 18px;
+    animation: fadeIn 0.5s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .update-card p { font-size: 1.1rem; line-height: 1.6; }
+  .update-card img { max-width: 100%; border-radius: 6px; margin-top: 10px; }
+
+  /* רצועת מבזקים */
+  .ticker {
+    background: #4a4aff;
+    padding: 10px 0;
+    overflow: hidden;
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+  }
+  .ticker-inner {
+    display: inline-block;
+    animation: ticker 60s linear infinite;
+    padding-right: 100%;
+  }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+  .ticker-item { display: inline-block; margin-left: 60px; }
+  .ticker-item::before { content: '◆  '; color: #fff9; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏢 עדכוני בניין ופרסומות</h1>
+  <div class="clock" id="clock">00:00</div>
+</header>
+
+<div class="main-content">
+  <!-- פרסומות -->
+  <div class="ads-panel" id="adsPanel">
+    <div class="panel-label">פרסומות</div>
+    <div id="adSlides"><div class="no-ads">אין פרסומות פעילות כרגע</div></div>
+    <div class="ad-dots" id="adDots"></div>
+  </div>
+
+  <!-- עדכוני בניין -->
+  <div class="updates-panel">
+    <h2>📢 עדכוני בניין</h2>
+    <div class="updates-list" id="updatesList"></div>
+  </div>
+</div>
+
+<!-- מבזקי חדשות -->
+<div class="ticker">
+  <div class="ticker-inner" id="ticker">טוען חדשות...</div>
+</div>
+
+<script>
+  // שעון
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // עדכוני בניין
+  async function loadUpdates() {
+    const res = await fetch('/api/updates');
+    const data = await res.json();
+    const el = document.getElementById('updatesList');
+    if (!data.length) { el.innerHTML = '<div style="color:#444;padding:20px">אין עדכונים כרגע</div>'; return; }
+    el.innerHTML = data.map(u => `
+      <div class="update-card">
+        <p>${u.text}</p>
+        ${u.image ? `<img src="${u.image}">` : ''}
+      </div>
+    `).join('');
+  }
+  loadUpdates();
+
+  // פרסומות
+  let adIndex = 0;
+  let adTimer = null;
+  let adsData = [];
+
+  async function loadAds() {
+    const res = await fetch('/api/ads');
+    adsData = await res.json();
+    renderAds();
+  }
+
+  function renderAds() {
+    const container = document.getElementById('adSlides');
+    const dots = document.getElementById('adDots');
+    if (!adsData.length) {
+      container.innerHTML = '<div class="no-ads">אין פרסומות פעילות כרגע</div>';
+      dots.innerHTML = '';
+      return;
+    }
+    container.innerHTML = adsData.map((ad, i) => `
+      <div class="ad-slide ${i === 0 ? 'active' : ''}" id="ad-${i}">
+        ${ad.type === 'video'
+          ? `<video src="${ad.url}" autoplay muted loop></video>`
+          : `<img src="${ad.url}" alt="${ad.title}">`}
+        <div class="ad-title">${ad.title}</div>
+      </div>
+    `).join('');
+    dots.innerHTML = adsData.map((_, i) =>
+      `<div class="ad-dot ${i === 0 ? 'active' : ''}" id="dot-${i}"></div>`
+    ).join('');
+    adIndex = 0;
+    if (adTimer) clearInterval(adTimer);
+    scheduleNextAd();
+  }
+
+  function scheduleNextAd() {
+    if (!adsData.length) return;
+    const duration = (adsData[adIndex].duration || 6) * 1000;
+    adTimer = setTimeout(() => {
+      document.getElementById('ad-' + adIndex)?.classList.remove('active');
+      document.getElementById('dot-' + adIndex)?.classList.remove('active');
+      adIndex = (adIndex + 1) % adsData.length;
+      document.getElementById('ad-' + adIndex)?.classList.add('active');
+      document.getElementById('dot-' + adIndex)?.classList.add('active');
+      scheduleNextAd();
+    }, duration);
+  }
+
+  loadAds();
+
+  // מבזקי ynet
+  async function loadNews() {
+    const res = await fetch('/api/news');
+    const data = await res.json();
+    if (data.length) {
+      document.getElementById('ticker').innerHTML =
+        data.map(n => `<span class="ticker-item">${n}</span>`).join('');
+    }
+  }
+  loadNews();
+  setInterval(loadNews, 10 * 60 * 1000);
+
+  // רענון כל 5 דקות
+  setInterval(() => { loadUpdates(); loadAds(); }, 5 * 60 * 1000);
+</script>
+</body>
+</html>

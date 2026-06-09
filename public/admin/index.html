@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>פאנל ניהול — בניין</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f0f1e; color: #e0e0e0; font-family: 'Segoe UI', Arial, sans-serif; min-height: 100vh; }
+
+  /* Login */
+  #loginScreen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+  }
+  .login-box {
+    background: #1a1a3e; border: 1px solid #2a2a5a; border-radius: 16px;
+    padding: 48px 40px; width: 340px; text-align: center;
+  }
+  .login-box h2 { font-size: 1.6rem; margin-bottom: 8px; }
+  .login-box p { color: #888; margin-bottom: 28px; font-size: 0.95rem; }
+  .login-box input {
+    width: 100%; padding: 14px 16px; border-radius: 8px;
+    border: 1px solid #333; background: #0f0f1e; color: #fff;
+    font-size: 1rem; margin-bottom: 14px; text-align: right;
+  }
+  .login-box input:focus { outline: none; border-color: #4a4aff; }
+  .btn-primary {
+    background: #4a4aff; color: #fff; border: none; border-radius: 8px;
+    padding: 14px 28px; font-size: 1rem; cursor: pointer; width: 100%;
+    transition: background 0.2s;
+  }
+  .btn-primary:hover { background: #3535cc; }
+  .error-msg { color: #ff6b6b; font-size: 0.9rem; margin-top: 10px; }
+
+  /* Main */
+  #mainScreen { display: none; }
+  .topbar {
+    background: linear-gradient(135deg, #1a1a3e, #2d2d6b);
+    padding: 16px 24px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 3px solid #4a4aff;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar h1 { font-size: 1.3rem; }
+  .topbar button {
+    background: transparent; color: #aaa; border: 1px solid #444;
+    border-radius: 6px; padding: 8px 16px; cursor: pointer; font-size: 0.9rem;
+  }
+
+  /* Tabs */
+  .tabs { display: flex; background: #12122a; border-bottom: 2px solid #2a2a5a; }
+  .tab {
+    padding: 16px 24px; cursor: pointer; font-size: 1rem; color: #888;
+    border-bottom: 3px solid transparent; transition: all 0.2s;
+    flex: 1; text-align: center;
+  }
+  .tab.active { color: #fff; border-bottom-color: #4a4aff; background: #1a1a3e; }
+
+  .content { padding: 24px; max-width: 900px; margin: 0 auto; }
+
+  /* Section */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .card {
+    background: #1a1a3e; border: 1px solid #2a2a5a; border-radius: 12px;
+    padding: 20px; margin-bottom: 16px;
+  }
+  .card-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .card-row span { font-size: 1.05rem; flex: 1; }
+  .office-tag {
+    background: #4a4aff; color: #fff; padding: 6px 14px;
+    border-radius: 6px; font-weight: 700; font-size: 0.95rem;
+  }
+  .btn-del {
+    background: transparent; color: #ff6b6b; border: 1px solid #ff6b6b;
+    border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem;
+  }
+  .btn-del:hover { background: #ff6b6b; color: #fff; }
+
+  /* Form */
+  .add-form { background: #12122a; border: 1px solid #2a2a5a; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+  .add-form h3 { margin-bottom: 16px; font-size: 1rem; color: #aaa; }
+  .form-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .form-row input, .form-row textarea, .form-row select {
+    flex: 1; min-width: 140px; padding: 12px 14px; border-radius: 8px;
+    border: 1px solid #333; background: #0f0f1e; color: #fff;
+    font-size: 0.95rem; text-align: right;
+  }
+  .form-row input:focus, .form-row textarea:focus { outline: none; border-color: #4a4aff; }
+  .form-row textarea { min-height: 80px; resize: vertical; }
+  .btn-add {
+    background: #4a4aff; color: #fff; border: none; border-radius: 8px;
+    padding: 12px 24px; font-size: 0.95rem; cursor: pointer; white-space: nowrap;
+  }
+  .btn-add:hover { background: #3535cc; }
+
+  /* Ads */
+  .ad-card { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .ad-thumb { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; background: #333; }
+  .ad-info { flex: 1; }
+  .ad-info strong { display: block; font-size: 1rem; margin-bottom: 4px; }
+  .ad-info small { color: #888; font-size: 0.85rem; }
+  .toggle-btn {
+    border: none; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem;
+  }
+  .toggle-btn.on { background: #2ecc71; color: #fff; }
+  .toggle-btn.off { background: #444; color: #aaa; }
+
+  .file-input-label {
+    display: block; background: #0f0f1e; border: 2px dashed #333;
+    border-radius: 8px; padding: 20px; text-align: center; cursor: pointer;
+    color: #888; margin-bottom: 12px; transition: border-color 0.2s;
+  }
+  .file-input-label:hover { border-color: #4a4aff; color: #4a4aff; }
+  .file-input-label input { display: none; }
+
+  .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; color: #fff; }
+  .empty-state { text-align: center; color: #555; padding: 40px; font-size: 1rem; }
+
+  @media (max-width: 600px) {
+    .tabs .tab { font-size: 0.85rem; padding: 14px 8px; }
+    .content { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- מסך כניסה -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h2>🏢 פאנל ניהול</h2>
+    <p>בניין משרדים</p>
+    <input type="password" id="passwordInput" placeholder="הכנס סיסמה" onkeydown="if(event.key==='Enter')login()">
+    <button class="btn-primary" onclick="login()">כניסה</button>
+    <div class="error-msg" id="loginError"></div>
+  </div>
+</div>
+
+<!-- מסך ראשי -->
+<div id="mainScreen">
+  <div class="topbar">
+    <h1>🏢 פאנל ניהול בניין</h1>
+    <button onclick="logout()">יציאה</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('businesses', this)">🏪 עסקים</div>
+    <div class="tab" onclick="showTab('ads', this)">📢 פרסומות</div>
+    <div class="tab" onclick="showTab('updates', this)">📋 עדכונים</div>
+  </div>
+
+  <div class="content">
+
+    <!-- עסקים -->
+    <div class="section active" id="section-businesses">
+      <div class="section-title">ניהול עסקים</div>
+      <div class="add-form">
+        <h3>הוספת עסק חדש</h3>
+        <div class="form-row">
+          <input type="text" id="newBizName" placeholder="שם העסק">
+          <input type="text" id="newBizOffice" placeholder="מספר משרד" style="max-width:150px">
+          <button class="btn-add" onclick="addBusiness()">+ הוסף</button>
+        </div>
+      </div>
+      <div id="businessList"></div>
+    </div>
+
+    <!-- פרסומות -->
+    <div class="section" id="section-ads">
+      <div class="section-title">ניהול פרסומות</div>
+      <div class="add-form">
+        <h3>הוספת פרסומת</h3>
+        <div class="form-row" style="margin-bottom:12px">
+          <input type="text" id="adTitle" placeholder="שם המפרסם / כותרת">
+          <input type="number" id="adDuration" placeholder="שניות תצוגה" value="6" style="max-width:160px">
+        </div>
+        <label class="file-input-label">
+          📁 לחץ לבחירת תמונה או סרטון (MP4, JPG, PNG, GIF)
+          <input type="file" id="adFile" accept="image/*,video/mp4">
+        </label>
+        <div id="fileSelected" style="color:#4a9eff;font-size:0.9rem;margin-bottom:12px"></div>
+        <button class="btn-add" onclick="uploadAd()">+ העלה פרסומת</button>
+      </div>
+      <div id="adList"></div>
+    </div>
+
+    <!-- עדכוני בניין -->
+    <div class="section" id="section-updates">
+      <div class="section-title">עדכוני בניין</div>
+      <div class="add-form">
+        <h3>הוספת עדכון</h3>
+        <div class="form-row">
+          <textarea id="newUpdateText" placeholder="כתוב את ההודעה כאן..."></textarea>
+          <button class="btn-add" style="align-self:flex-end" onclick="addUpdate()">+ פרסם</button>
+        </div>
+      </div>
+      <div id="updateList"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// --- Auth ---
+async function login() {
+  const pw = document.getElementById('passwordInput').value;
+  const res = await fetch('/api/login', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ password: pw })
+  });
+  if (res.ok) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainScreen').style.display = 'block';
+    loadAll();
+  } else {
+    document.getElementById('loginError').textContent = 'סיסמה שגויה, נסה שוב';
+  }
+}
+
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  location.reload();
+}
+
+// --- Tabs ---
+function showTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('section-' + name).classList.add('active');
+}
+
+function loadAll() { loadBusinesses(); loadAds(); loadUpdates(); }
+
+// --- עסקים ---
+async function loadBusinesses() {
+  const data = await fetch('/api/businesses').then(r => r.json());
+  const el = document.getElementById('businessList');
+  if (!data.length) { el.innerHTML = '<div class="empty-state">אין עסקים עדיין</div>'; return; }
+  el.innerHTML = data.map(b => `
+    <div class="card">
+      <div class="card-row">
+        <span>${b.name}</span>
+        <span class="office-tag">משרד ${b.office}</span>
+        <button class="btn-del" onclick="deleteBusiness(${b.id})">מחק</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function addBusiness() {
+  const name = document.getElementById('newBizName').value.trim();
+  const office = document.getElementById('newBizOffice').value.trim();
+  if (!name || !office) return alert('נא למלא שם ומספר משרד');
+  await fetch('/api/businesses', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ name, office })
+  });
+  document.getElementById('newBizName').value = '';
+  document.getElementById('newBizOffice').value = '';
+  loadBusinesses();
+}
+
+async function deleteBusiness(id) {
+  if (!confirm('למחוק עסק זה?')) return;
+  await fetch('/api/businesses/' + id, { method: 'DELETE' });
+  loadBusinesses();
+}
+
+// --- פרסומות ---
+document.getElementById('adFile')?.addEventListener('change', function() {
+  document.getElementById('fileSelected').textContent = this.files[0]?.name || '';
+});
+
+async function loadAds() {
+  const data = await fetch('/api/ads/all').then(r => r.json());
+  const el = document.getElementById('adList');
+  if (!data.length) { el.innerHTML = '<div class="empty-state">אין פרסומות עדיין</div>'; return; }
+  el.innerHTML = data.map(a => `
+    <div class="card">
+      <div class="ad-card">
+        ${a.type === 'video'
+          ? `<video class="ad-thumb" src="${a.url}" muted></video>`
+          : a.url ? `<img class="ad-thumb" src="${a.url}" alt="">` : `<div class="ad-thumb"></div>`}
+        <div class="ad-info">
+          <strong>${a.title}</strong>
+          <small>${a.duration} שניות תצוגה</small>
+        </div>
+        <button class="toggle-btn ${a.active ? 'on' : 'off'}" onclick="toggleAd(${a.id}, ${!a.active})">
+          ${a.active ? '✓ פעיל' : '⏸ מושהה'}
+        </button>
+        <button class="btn-del" onclick="deleteAd(${a.id})">מחק</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function uploadAd() {
+  const title = document.getElementById('adTitle').value.trim();
+  const file = document.getElementById('adFile').files[0];
+  const duration = document.getElementById('adDuration').value || 6;
+  if (!title) return alert('נא להכניס שם מפרסם');
+  if (!file) return alert('נא לבחור קובץ');
+  const form = new FormData();
+  form.append('title', title);
+  form.append('duration', duration);
+  form.append('active', 'true');
+  form.append('type', file.type.startsWith('video') ? 'video' : 'image');
+  form.append('file', file);
+  await fetch('/api/ads', { method: 'POST', body: form });
+  document.getElementById('adTitle').value = '';
+  document.getElementById('adFile').value = '';
+  document.getElementById('fileSelected').textContent = '';
+  loadAds();
+}
+
+async function toggleAd(id, active) {
+  await fetch('/api/ads/' + id, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ active: String(active) })
+  });
+  loadAds();
+}
+
+async function deleteAd(id) {
+  if (!confirm('למחוק פרסומת זו?')) return;
+  await fetch('/api/ads/' + id, { method: 'DELETE' });
+  loadAds();
+}
+
+// --- עדכונים ---
+async function loadUpdates() {
+  const data = await fetch('/api/updates').then(r => r.json());
+  const el = document.getElementById('updateList');
+  if (!data.length) { el.innerHTML = '<div class="empty-state">אין עדכונים עדיין</div>'; return; }
+  el.innerHTML = data.map(u => `
+    <div class="card">
+      <div class="card-row">
+        <span>${u.text}</span>
+        <button class="btn-del" onclick="deleteUpdate(${u.id})">מחק</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function addUpdate() {
+  const text = document.getElementById('newUpdateText').value.trim();
+  if (!text) return alert('נא לכתוב הודעה');
+  await fetch('/api/updates', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ text })
+  });
+  document.getElementById('newUpdateText').value = '';
+  loadUpdates();
+}
+
+async function deleteUpdate(id) {
+  if (!confirm('למחוק עדכון זה?')) return;
+  await fetch('/api/updates/' + id, { method: 'DELETE' });
+  loadUpdates();
+}
+</script>
+</body>
+</html>

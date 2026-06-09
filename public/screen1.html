@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מדריך עסקים</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a1a;
+    color: #fff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: linear-gradient(135deg, #1a1a3e, #2d2d6b);
+    padding: 28px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid #4a4aff;
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  header .subtitle {
+    font-size: 1.1rem;
+    color: #aaa;
+    margin-top: 6px;
+  }
+  .clock {
+    font-size: 2.8rem;
+    font-weight: 300;
+    color: #4a9eff;
+    letter-spacing: 4px;
+  }
+  .list-container {
+    flex: 1;
+    overflow: hidden;
+    padding: 32px 48px;
+    display: flex;
+    flex-direction: column;
+  }
+  .col-headers {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    padding: 0 24px 16px;
+    color: #888;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 1px solid #333;
+    margin-bottom: 8px;
+  }
+  .scroll-wrap {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+  .business-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: scrollUp 30s linear infinite;
+  }
+  .business-list:hover { animation-play-state: paused; }
+  @keyframes scrollUp {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+  .business-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    background: linear-gradient(135deg, #12122a, #1a1a3e);
+    border: 1px solid #2a2a5a;
+    border-radius: 12px;
+    padding: 20px 24px;
+    transition: border-color 0.3s;
+  }
+  .business-item:hover { border-color: #4a4aff; }
+  .business-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  .office-badge {
+    background: #4a4aff;
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: 8px;
+    min-width: 80px;
+    text-align: center;
+  }
+  footer {
+    background: #0d0d2a;
+    padding: 12px 48px;
+    text-align: center;
+    color: #555;
+    font-size: 0.85rem;
+    border-top: 1px solid #222;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🏢 מדריך עסקים</h1>
+    <div class="subtitle">לאיתור עסק — בחר קומה ומשרד</div>
+  </div>
+  <div class="clock" id="clock">00:00</div>
+</header>
+
+<div class="list-container">
+  <div class="col-headers">
+    <span>שם העסק</span>
+    <span>משרד</span>
+  </div>
+  <div class="scroll-wrap">
+    <div class="business-list" id="list"></div>
+  </div>
+</div>
+
+<footer>המידע מתעדכן בזמן אמת &nbsp;|&nbsp; לבירורים פנה לקבלה</footer>
+
+<script>
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('clock').textContent = h + ':' + m;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  async function loadBusinesses() {
+    const res = await fetch('/api/businesses');
+    const data = await res.json();
+    const list = document.getElementById('list');
+    const items = data.map(b => `
+      <div class="business-item">
+        <div class="business-name">${b.name}</div>
+        <div class="office-badge">${b.office}</div>
+      </div>
+    `).join('');
+    // מכפיל פעמיים לאנימציה חלקה
+    list.innerHTML = items + items;
+  }
+
+  loadBusinesses();
+  setInterval(loadBusinesses, 60 * 1000);
+</script>
+</body>
+</html>

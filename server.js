@@ -36,7 +36,12 @@ app.use(express.static('public'));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'building-secret',
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    secure: false,
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000 // שבוע
+  }
 }));
 
 // --- נתונים ---
@@ -124,6 +129,18 @@ app.put('/api/updates/:id', requireAuth, (req, res) => {
 
 app.delete('/api/updates/:id', requireAuth, (req, res) => {
   let list = readData('updates.json').filter(u => u.id != req.params.id);
+  writeData('updates.json', list);
+  res.json({ ok: true });
+});
+
+app.post('/api/updates/reorder', requireAuth, (req, res) => {
+  const { id, direction } = req.body;
+  let list = readData('updates.json');
+  const idx = list.findIndex(u => u.id == id);
+  if (idx === -1) return res.json({ ok: false });
+  const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (newIdx < 0 || newIdx >= list.length) return res.json({ ok: false });
+  [list[idx], list[newIdx]] = [list[newIdx], list[idx]];
   writeData('updates.json', list);
   res.json({ ok: true });
 });

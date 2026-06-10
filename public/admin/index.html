@@ -334,14 +334,29 @@ async function deleteAd(id) {
 }
 
 // --- עדכונים ---
+async function handleRes(res) {
+  if (res.status === 401) {
+    alert('פג תוקף הכניסה — נא להתחבר מחדש');
+    req.session = null;
+    location.reload();
+    return false;
+  }
+  return true;
+}
+
 async function loadUpdates() {
-  const data = await fetch('/api/updates').then(r => r.json());
+  const res = await fetch('/api/updates');
+  const data = await res.json();
   const el = document.getElementById('updateList');
   if (!data.length) { el.innerHTML = '<div class="empty-state">אין עדכונים עדיין</div>'; return; }
-  el.innerHTML = data.map(u => `
+  el.innerHTML = data.map((u, i) => `
     <div class="card">
       <div class="card-row">
-        <span>${u.text}</span>
+        <div style="display:flex;flex-direction:column;gap:4px;margin-left:8px">
+          <button class="toggle-btn on" style="padding:2px 8px;font-size:0.75rem" onclick="reorderUpdate(${u.id},'up')" ${i===0?'disabled':''}>▲</button>
+          <button class="toggle-btn on" style="padding:2px 8px;font-size:0.75rem" onclick="reorderUpdate(${u.id},'down')" ${i===data.length-1?'disabled':''}>▼</button>
+        </div>
+        <span style="flex:1">${u.text}</span>
         <button class="btn-del" onclick="deleteUpdate(${u.id})">מחק</button>
       </div>
     </div>
@@ -351,17 +366,28 @@ async function loadUpdates() {
 async function addUpdate() {
   const text = document.getElementById('newUpdateText').value.trim();
   if (!text) return alert('נא לכתוב הודעה');
-  await fetch('/api/updates', {
+  const res = await fetch('/api/updates', {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ text })
   });
+  if (res.status === 401) { alert('פג תוקף הכניסה — נא להתחבר מחדש'); location.reload(); return; }
   document.getElementById('newUpdateText').value = '';
   loadUpdates();
 }
 
 async function deleteUpdate(id) {
   if (!confirm('למחוק עדכון זה?')) return;
-  await fetch('/api/updates/' + id, { method: 'DELETE' });
+  const res = await fetch('/api/updates/' + id, { method: 'DELETE' });
+  if (res.status === 401) { alert('פג תוקף הכניסה — נא להתחבר מחדש'); location.reload(); return; }
+  loadUpdates();
+}
+
+async function reorderUpdate(id, direction) {
+  const res = await fetch('/api/updates/reorder', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ id, direction })
+  });
+  if (res.status === 401) { alert('פג תוקף הכניסה — נא להתחבר מחדש'); location.reload(); return; }
   loadUpdates();
 }
 </script>

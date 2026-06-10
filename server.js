@@ -77,7 +77,7 @@ async function fetchNews() {
   }
 }
 fetchNews();
-setInterval(fetchNews, 10 * 60 * 1000);
+setInterval(fetchNews, 2 * 60 * 1000);
 
 // --- API ציבורי ---
 app.get('/api/businesses', (req, res) => res.json(readData('businesses.json')));

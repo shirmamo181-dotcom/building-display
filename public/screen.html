@@ -567,6 +567,9 @@
   loadNews();
   setInterval(loadNews, 5 * 60 * 1000);
   startTicker();
+
+  // רענון מלא של הדף כל 10 דקות
+  setInterval(() => location.reload(), 10 * 60 * 1000);
 </script>
 </body>
 </html>

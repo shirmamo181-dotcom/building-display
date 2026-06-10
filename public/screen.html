@@ -140,7 +140,7 @@
     flex-direction: column;
   }
   .biz-scroll {
-    animation: scrollUp 25s linear infinite;
+    animation: scrollUp 60s linear infinite;
   }
   .biz-scroll:hover { animation-play-state: paused; }
   @keyframes scrollUp {
@@ -240,12 +240,57 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: #bbb;
-    font-size: 1rem;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
+    background: linear-gradient(135deg, #0d1b4b 0%, #1a2f6e 50%, #0d1b4b 100%);
+    position: relative;
+    overflow: hidden;
   }
-  .no-ads span { font-size: 2rem; }
+  .no-ads::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(126,179,255,0.12) 0%, transparent 70%);
+  }
+  .no-ads-inner {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 32px;
+  }
+  .no-ads-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: #7eb3ff;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    opacity: 0.8;
+  }
+  .no-ads-main {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.4;
+    margin-bottom: 24px;
+  }
+  .no-ads-phone {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #7eb3ff;
+    letter-spacing: 2px;
+    background: rgba(255,255,255,0.08);
+    padding: 14px 28px;
+    border-radius: 12px;
+    border: 1px solid rgba(126,179,255,0.3);
+    display: inline-block;
+  }
+  .no-ads-sub {
+    margin-top: 18px;
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1px;
+  }
   .ad-dots {
     display: flex;
     justify-content: center;
@@ -339,7 +384,14 @@
   <div class="ads-panel">
     <div class="panel-header">📢 פרסומות</div>
     <div class="ad-content" id="adSlides">
-      <div class="no-ads"><span>📭</span>אין פרסומות פעילות כרגע</div>
+      <div class="no-ads">
+        <div class="no-ads-inner">
+          <div class="no-ads-label">מקום פרסום</div>
+          <div class="no-ads-main">פרסמו את העסק שלכם<br>על מסך הבניין</div>
+          <div class="no-ads-phone">052-6060848</div>
+          <div class="no-ads-sub">לפרסום כאן חייגו</div>
+        </div>
+      </div>
     </div>
     <div class="ad-dots" id="adDots"></div>
   </div>
@@ -409,7 +461,7 @@
     const container = document.getElementById('adSlides');
     const dots = document.getElementById('adDots');
     if (!adsData.length) {
-      container.innerHTML = '<div class="no-ads"><span>📭</span>אין פרסומות פעילות כרגע</div>';
+      container.innerHTML = `<div class="no-ads"><div class="no-ads-inner"><div class="no-ads-label">מקום פרסום</div><div class="no-ads-main">פרסמו את העסק שלכם<br>על מסך הבניין</div><div class="no-ads-phone">052-6060848</div><div class="no-ads-sub">לפרסום כאן חייגו</div></div></div>`;
       dots.innerHTML = '';
       return;
     }

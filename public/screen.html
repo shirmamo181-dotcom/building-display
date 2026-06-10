@@ -11,18 +11,50 @@
   :root {
     --gold: #c9a257;
     --gold-light: #e8c97a;
-    --gold-dim: rgba(201,162,87,0.18);
-    --gold-border: rgba(201,162,87,0.28);
-    --bg: #0b0c12;
-    --surface: rgba(255,255,255,0.035);
-    --surface-hover: rgba(255,255,255,0.06);
-    --text: #ede8dc;
-    --text-dim: #7a7060;
-    --bar-bg: #080910;
+    --gold-dim: rgba(201,162,87,0.15);
+    --gold-border: rgba(201,162,87,0.22);
+    --surface: rgba(15,10,5,0.72);
+    --surface-hover: rgba(15,10,5,0.82);
+    --text: #ede0cc;
+    --text-dim: #7a6e58;
+    --bar-bg: rgba(10,7,3,0.90);
   }
 
   body {
-    background: var(--bg);
+    background-color: #1c1208;
+    background-image:
+      repeating-linear-gradient(
+        89deg,
+        transparent 0px,
+        transparent 3px,
+        rgba(0,0,0,0.06) 3px,
+        rgba(0,0,0,0.06) 4px,
+        transparent 4px,
+        transparent 9px,
+        rgba(255,180,80,0.025) 9px,
+        rgba(255,180,80,0.025) 11px,
+        transparent 11px,
+        transparent 18px,
+        rgba(0,0,0,0.04) 18px,
+        rgba(0,0,0,0.04) 20px
+      ),
+      repeating-linear-gradient(
+        91deg,
+        transparent 0px,
+        transparent 40px,
+        rgba(0,0,0,0.03) 40px,
+        rgba(0,0,0,0.03) 42px
+      ),
+      linear-gradient(
+        175deg,
+        #2a1c0a 0%,
+        #1c1208 18%,
+        #231508 35%,
+        #1a1007 50%,
+        #251a0b 65%,
+        #1c1208 80%,
+        #201409 100%
+      );
     color: var(--text);
     font-family: 'Heebo', Arial, sans-serif;
     height: 100vh;

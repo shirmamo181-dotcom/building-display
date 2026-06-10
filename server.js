@@ -61,10 +61,12 @@ const writeData = (file, data) => fs.writeFileSync(dataPath(file), JSON.stringif
 
 // --- מבזקי ynet ---
 let newsCache = [];
+let newsCacheTime = 0;
+
 async function fetchNews() {
   try {
     const res = await fetch('https://www.ynet.co.il/Integration/StoryRss2.xml', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BuildingDisplay/1.0)' }
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
     });
     const xml = await res.text();
     const result = await xml2js.parseStringPromise(xml);
@@ -72,6 +74,8 @@ async function fetchNews() {
       title: i.title[0],
       pubDate: i.pubDate ? i.pubDate[0] : ''
     }));
+    newsCacheTime = Date.now();
+    console.log('ynet עודכן:', new Date().toLocaleTimeString('he-IL'), '—', newsCache.length, 'פריטים');
   } catch (e) {
     console.log('שגיאה ynet:', e.message);
   }
@@ -83,7 +87,11 @@ setInterval(fetchNews, 2 * 60 * 1000);
 app.get('/api/businesses', (req, res) => res.json(readData('businesses.json')));
 app.get('/api/updates', (req, res) => res.json(readData('updates.json')));
 app.get('/api/ads', (req, res) => res.json(readData('ads.json').filter(a => a.active)));
-app.get('/api/news', (req, res) => res.json(newsCache));
+app.get('/api/news', async (req, res) => {
+  // אם הקאש ישן מ-2 דקות — שלוף מחדש לפני מענה
+  if (Date.now() - newsCacheTime > 2 * 60 * 1000) await fetchNews();
+  res.json(newsCache);
+});
 
 // --- Auth ---
 function requireAuth(req, res, next) {

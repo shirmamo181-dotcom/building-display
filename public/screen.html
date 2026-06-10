@@ -557,9 +557,8 @@
   updatesTicker.start();
 
   async function loadNews() {
-    const data = await fetch('/api/news').then(r => r.json());
+    const data = await fetch('/api/news').then(r => r.json()).catch(() => []);
     if (!data.length) return;
-    const el = document.getElementById('newsTicker');
     const makeItems = () => data.map(n => {
       const t = typeof n === 'object' ? n.title : n;
       const time = typeof n === 'object' ? fmtTime(n.pubDate) : '';
@@ -569,7 +568,7 @@
   }
 
   loadNews();
-  setInterval(loadNews, 5 * 60 * 1000);
+  setInterval(loadNews, 2 * 60 * 1000);
 
   // רענון מלא של הדף כל 10 דקות
   setInterval(() => location.reload(), 10 * 60 * 1000);

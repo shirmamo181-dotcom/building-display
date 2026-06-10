@@ -204,7 +204,12 @@
     flex: 1;
     position: relative;
     overflow: hidden;
-    background: #f7f9ff;
+    background: #0d1b4b;
+  }
+  #adSlides {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
   }
   .ad-slide {
     position: absolute;
@@ -383,7 +388,17 @@
   <!-- פרסומות -->
   <div class="ads-panel">
     <div class="panel-header">📢 פרסומות</div>
-    <div class="ad-content" id="adSlides"></div>
+    <div class="ad-content">
+      <div id="adPlaceholder" class="no-ads">
+        <div class="no-ads-inner">
+          <div class="no-ads-label">מקום פרסום</div>
+          <div class="no-ads-main">פרסמו את העסק שלכם<br>על מסך הבניין</div>
+          <div class="no-ads-phone">052-6060848</div>
+          <div class="no-ads-sub">לפרסום כאן חייגו</div>
+        </div>
+      </div>
+      <div id="adSlides"></div>
+    </div>
     <div class="ad-dots" id="adDots"></div>
   </div>
 
@@ -452,10 +467,12 @@
     const container = document.getElementById('adSlides');
     const dots = document.getElementById('adDots');
     if (!adsData.length) {
-      container.innerHTML = `<div class="no-ads"><div class="no-ads-inner"><div class="no-ads-label">מקום פרסום</div><div class="no-ads-main">פרסמו את העסק שלכם<br>על מסך הבניין</div><div class="no-ads-phone">052-6060848</div><div class="no-ads-sub">לפרסום כאן חייגו</div></div></div>`;
+      container.innerHTML = '';
       dots.innerHTML = '';
+      document.getElementById('adPlaceholder').style.display = 'flex';
       return;
     }
+    document.getElementById('adPlaceholder').style.display = 'none';
     container.innerHTML = adsData.map((ad, i) => `
       <div class="ad-slide ${i===0?'active':''}" id="ad-${i}">
         ${ad.type==='video'

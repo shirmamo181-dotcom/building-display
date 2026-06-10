@@ -92,6 +92,7 @@
     overflow: hidden;
     margin: 0 24px;
     position: relative;
+    direction: ltr;
   }
   .updates-ticker-wrap::before,
   .updates-ticker-wrap::after {
@@ -101,28 +102,24 @@
     width: 48px;
     z-index: 2;
   }
-  .updates-ticker-wrap::before { right: 0; background: linear-gradient(to left, var(--bar-bg), transparent); }
-  .updates-ticker-wrap::after  { left: 0;  background: linear-gradient(to right, var(--bar-bg), transparent); }
+  .updates-ticker-wrap::before { left: 0; background: linear-gradient(to right, var(--bar-bg), transparent); }
+  .updates-ticker-wrap::after  { right: 0; background: linear-gradient(to left, var(--bar-bg), transparent); }
 
   .updates-ticker {
-    display: flex;
-    align-items: center;
-    height: 100%;
+    display: inline-block;
     white-space: nowrap;
-    animation: scrollRight 40s linear infinite;
-  }
-  @keyframes scrollRight {
-    from { transform: translateX(0%); }
-    to   { transform: translateX(-50%); }
+    direction: ltr;
+    will-change: transform;
   }
   .update-item {
     display: inline-flex;
     align-items: center;
-    margin-left: 64px;
+    margin-right: 64px;
     font-size: 0.9rem;
     color: rgba(232,201,122,0.7);
     font-weight: 300;
     letter-spacing: 0.3px;
+    direction: rtl;
   }
   .update-item::before {
     content: '◈';
@@ -474,10 +471,9 @@
   // עדכוני בניין
   async function loadUpdates() {
     const data = await fetch('/api/updates').then(r => r.json());
-    const el = document.getElementById('updatesTicker');
     if (!data.length) return;
     const items = data.map(u => `<span class="update-item">${u.text}</span>`).join('');
-    el.innerHTML = items + items;
+    updatesTicker.setContent(items + items);
   }
   loadUpdates();
   setInterval(loadUpdates, 5 * 60 * 1000);
@@ -531,23 +527,34 @@
     return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
   }
 
-  let tickerX = 0, tickerHalfW = 0, tickerRAF = null;
-  const TICKER_SPEED = 80; // px/sec
-
-  function tickerStep(lastTs) {
-    return function step(ts) {
-      const dt = Math.min((ts - lastTs) / 1000, 0.1);
-      tickerX -= TICKER_SPEED * dt;
-      if (tickerHalfW > 0 && tickerX <= -tickerHalfW) tickerX += tickerHalfW;
-      document.getElementById('newsTicker').style.transform = `translateX(${tickerX}px)`;
-      tickerRAF = requestAnimationFrame(tickerStep(ts));
-    };
+  // מנוע גלילה גנרי לשני הסרגלים
+  function createTicker(elId, speed) {
+    let x = 0, halfW = 0, raf = null;
+    const el = () => document.getElementById(elId);
+    function step(lastTs) {
+      return function(ts) {
+        const dt = Math.min((ts - lastTs) / 1000, 0.1);
+        x -= speed * dt;
+        if (halfW > 0 && x <= -halfW) x += halfW;
+        el().style.transform = `translateX(${x}px)`;
+        raf = requestAnimationFrame(step(ts));
+      };
+    }
+    function start() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(ts => { raf = requestAnimationFrame(step(ts)); });
+    }
+    function setContent(html) {
+      el().innerHTML = html;
+      requestAnimationFrame(() => { halfW = el().scrollWidth / 2; });
+    }
+    return { start, setContent };
   }
 
-  function startTicker() {
-    if (tickerRAF) cancelAnimationFrame(tickerRAF);
-    tickerRAF = requestAnimationFrame(ts => { tickerRAF = requestAnimationFrame(tickerStep(ts)); });
-  }
+  const newsTicker  = createTicker('newsTicker',    80);
+  const updatesTicker = createTicker('updatesTicker', 50);
+  newsTicker.start();
+  updatesTicker.start();
 
   async function loadNews() {
     const data = await fetch('/api/news').then(r => r.json());
@@ -558,15 +565,11 @@
       const time = typeof n === 'object' ? fmtTime(n.pubDate) : '';
       return `<span class="news-item">${time ? `<span class="news-time">${time}</span>` : ''}${t}</span>`;
     }).join('');
-    el.innerHTML = makeItems() + makeItems();
-    requestAnimationFrame(() => {
-      tickerHalfW = el.scrollWidth / 2;
-    });
+    newsTicker.setContent(makeItems() + makeItems());
   }
 
   loadNews();
   setInterval(loadNews, 5 * 60 * 1000);
-  startTicker();
 
   // רענון מלא של הדף כל 10 דקות
   setInterval(() => location.reload(), 10 * 60 * 1000);

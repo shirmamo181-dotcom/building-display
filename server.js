@@ -49,6 +49,16 @@ const dataPath = (file) => path.join(__dirname, 'data', file);
 const readData = (file) => JSON.parse(fs.readFileSync(dataPath(file), 'utf8'));
 const writeData = (file, data) => fs.writeFileSync(dataPath(file), JSON.stringify(data, null, 2));
 
+// נקה פרסומות ללא URL בהפעלת השרת
+(function cleanStaleAds() {
+  const ads = readData('ads.json');
+  const cleaned = ads.filter(a => a.url && a.url.trim() !== '');
+  if (cleaned.length !== ads.length) {
+    writeData('ads.json', cleaned);
+    console.log(`ניקה ${ads.length - cleaned.length} פרסומות ריקות`);
+  }
+})();
+
 // --- מבזקי ynet ---
 let newsCache = [];
 async function fetchNews() {

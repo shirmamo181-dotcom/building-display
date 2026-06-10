@@ -204,12 +204,11 @@
     flex: 1;
     position: relative;
     overflow: hidden;
-    background: #0d1b4b;
   }
   #adSlides {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    z-index: 1;
   }
   .ad-slide {
     position: absolute;
@@ -220,6 +219,7 @@
     flex-direction: column;
     padding: 0;
     overflow: hidden;
+    z-index: 1;
   }
   .ad-slide.active { display: flex; }
   .ad-slide img {
@@ -250,6 +250,7 @@
     position: absolute;
     inset: 0;
     overflow: hidden;
+    z-index: 0;
   }
   .no-ads::before {
     content: '';
@@ -469,10 +470,8 @@
     if (!adsData.length) {
       container.innerHTML = '';
       dots.innerHTML = '';
-      document.getElementById('adPlaceholder').style.display = 'flex';
       return;
     }
-    document.getElementById('adPlaceholder').style.display = 'none';
     container.innerHTML = adsData.map((ad, i) => `
       <div class="ad-slide ${i===0?'active':''}" id="ad-${i}">
         ${ad.type==='video'

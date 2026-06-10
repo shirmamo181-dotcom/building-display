@@ -406,14 +406,22 @@ async function loadUpdates() {
   const el = document.getElementById('updateList');
   if (!data.length) { el.innerHTML = '<div class="empty-state">אין עדכונים עדיין</div>'; return; }
   el.innerHTML = data.map((u, i) => `
-    <div class="card">
+    <div class="card" id="update-card-${u.id}">
       <div class="card-row">
         <div style="display:flex;flex-direction:column;gap:4px;margin-left:8px">
           <button class="toggle-btn on" style="padding:2px 8px;font-size:0.75rem" onclick="reorderUpdate(${u.id},'up')" ${i===0?'disabled':''}>▲</button>
           <button class="toggle-btn on" style="padding:2px 8px;font-size:0.75rem" onclick="reorderUpdate(${u.id},'down')" ${i===data.length-1?'disabled':''}>▼</button>
         </div>
         <span style="flex:1">${u.text}</span>
+        <button class="btn-edit" onclick="toggleUpdateEdit(${u.id})">✏️ עריכה</button>
         <button class="btn-del" onclick="deleteUpdate(${u.id})">מחק</button>
+      </div>
+      <div class="inline-edit-form" id="update-edit-${u.id}" style="display:none">
+        <textarea id="update-edit-text-${u.id}" style="width:100%;min-height:80px;padding:10px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-size:0.95rem;font-family:inherit;resize:vertical">${u.text}</textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn-save" onclick="saveUpdate(${u.id})">שמור</button>
+          <button class="btn-cancel" onclick="toggleUpdateEdit(${u.id})">ביטול</button>
+        </div>
       </div>
     </div>
   `).join('');
@@ -434,6 +442,22 @@ async function addUpdate() {
 async function deleteUpdate(id) {
   if (!confirm('למחוק עדכון זה?')) return;
   const res = await fetch('/api/updates/' + id, { method: 'DELETE' });
+  if (res.status === 401) { alert('פג תוקף הכניסה — נא להתחבר מחדש'); location.reload(); return; }
+  loadUpdates();
+}
+
+function toggleUpdateEdit(id) {
+  const form = document.getElementById('update-edit-' + id);
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveUpdate(id) {
+  const text = document.getElementById('update-edit-text-' + id).value.trim();
+  if (!text) return alert('הטקסט לא יכול להיות ריק');
+  const res = await fetch('/api/updates/' + id, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ text })
+  });
   if (res.status === 401) { alert('פג תוקף הכניסה — נא להתחבר מחדש'); location.reload(); return; }
   loadUpdates();
 }

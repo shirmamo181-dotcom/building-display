@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מסך בניין</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #f0f4f8;
+    color: #1a2340;
+    font-family: 'Heebo', Arial, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== שורת כותרת עליונה ===== */
+  .top-bar {
+    background: #1a2f6e;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    height: 72px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+
+  .building-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    margin-left: 24px;
+    flex-shrink: 0;
+  }
+
+  .datetime {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-shrink: 0;
+    min-width: 130px;
+  }
+  .datetime .time {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #7eb3ff;
+    letter-spacing: 2px;
+  }
+  .datetime .date {
+    font-size: 0.8rem;
+    color: #aac4ff;
+    margin-top: 2px;
+  }
+
+  /* עדכוני בניין בגלילה */
+  .updates-ticker-wrap {
+    flex: 1;
+    overflow: hidden;
+    margin: 0 20px;
+    position: relative;
+  }
+  .updates-ticker-wrap::before,
+  .updates-ticker-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 40px;
+    z-index: 2;
+  }
+  .updates-ticker-wrap::before { right: 0; background: linear-gradient(to left, #1a2f6e, transparent); }
+  .updates-ticker-wrap::after { left: 0; background: linear-gradient(to right, #1a2f6e, transparent); }
+
+  .updates-ticker {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    white-space: nowrap;
+    animation: scrollRight 40s linear infinite;
+  }
+  @keyframes scrollRight {
+    from { transform: translateX(-50%); }
+    to { transform: translateX(0%); }
+  }
+  .update-item {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 60px;
+    font-size: 0.95rem;
+    color: #cfe0ff;
+  }
+  .update-item::before {
+    content: '📢';
+    margin-left: 8px;
+  }
+
+  /* ===== גוף ראשי ===== */
+  .main-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 16px;
+    min-height: 0;
+  }
+
+  /* === עסקים === */
+  .businesses-panel {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(26,47,110,0.08);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-header {
+    background: #1a2f6e;
+    color: #fff;
+    padding: 14px 20px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .biz-list {
+    flex: 1;
+    overflow: hidden;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+  }
+  .biz-scroll {
+    animation: scrollUp 25s linear infinite;
+  }
+  .biz-scroll:hover { animation-play-state: paused; }
+  @keyframes scrollUp {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+  .biz-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    background: #f7f9ff;
+    border: 1px solid #e0e8ff;
+    border-right: 4px solid #1a2f6e;
+    border-radius: 10px;
+    transition: background 0.2s;
+  }
+  .biz-item:hover { background: #eef2ff; }
+  .biz-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1a2340;
+  }
+  .biz-room {
+    background: #1a2f6e;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 8px;
+    min-width: 64px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  /* === פרסומות === */
+  .ads-panel {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(26,47,110,0.08);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .ad-content {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #f7f9ff;
+  }
+  .ad-slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 16px;
+  }
+  .ad-slide.active { display: flex; }
+  .ad-slide img {
+    max-width: 100%;
+    max-height: 85%;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+  .ad-slide video {
+    max-width: 100%;
+    max-height: 85%;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+  .ad-title {
+    margin-top: 10px;
+    font-size: 1rem;
+    color: #555;
+    font-weight: 600;
+  }
+  .no-ads {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #bbb;
+    font-size: 1rem;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .no-ads span { font-size: 2rem; }
+  .ad-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px;
+    flex-shrink: 0;
+  }
+  .ad-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #d0d8ee;
+    transition: background 0.3s;
+  }
+  .ad-dot.active { background: #1a2f6e; }
+
+  /* ===== רצועת חדשות תחתית ===== */
+  .news-bar {
+    background: #1a2f6e;
+    color: #fff;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .news-label {
+    background: #e63946;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 0 16px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    letter-spacing: 1px;
+    z-index: 2;
+  }
+  .news-ticker-wrap {
+    flex: 1;
+    overflow: hidden;
+    margin: 0 12px;
+  }
+  .news-ticker {
+    display: inline-block;
+    white-space: nowrap;
+    animation: newsTicker 80s linear infinite;
+    font-size: 0.92rem;
+    color: #d0e4ff;
+  }
+  @keyframes newsTicker {
+    from { transform: translateX(-50%); }
+    to { transform: translateX(0%); }
+  }
+  .news-item { display: inline-block; margin-left: 60px; }
+  .news-item::before { content: '◆  '; color: #7eb3ff; font-size: 0.7rem; }
+</style>
+</head>
+<body>
+
+<!-- שורה עליונה -->
+<div class="top-bar">
+  <div class="datetime">
+    <div class="time" id="clock">00:00</div>
+    <div class="date" id="dateDisplay"></div>
+  </div>
+
+  <div class="updates-ticker-wrap">
+    <div class="updates-ticker" id="updatesTicker">
+      <span class="update-item">ברוכים הבאים לבניין</span>
+      <span class="update-item">ברוכים הבאים לבניין</span>
+    </div>
+  </div>
+
+  <div class="building-name">🏢 מרכז עסקים</div>
+</div>
+
+<!-- גוף ראשי -->
+<div class="main-body">
+
+  <!-- עסקים -->
+  <div class="businesses-panel">
+    <div class="panel-header">📋 מדריך עסקים ומשרדים</div>
+    <div class="biz-list">
+      <div class="biz-scroll" id="bizScroll"></div>
+    </div>
+  </div>
+
+  <!-- פרסומות -->
+  <div class="ads-panel">
+    <div class="panel-header">📢 פרסומות</div>
+    <div class="ad-content" id="adSlides">
+      <div class="no-ads"><span>📭</span>אין פרסומות פעילות כרגע</div>
+    </div>
+    <div class="ad-dots" id="adDots"></div>
+  </div>
+
+</div>
+
+<!-- חדשות ynet -->
+<div class="news-bar">
+  <div class="news-label">ynet חדשות</div>
+  <div class="news-ticker-wrap">
+    <div class="news-ticker" id="newsTicker">טוען חדשות...</div>
+  </div>
+</div>
+
+<script>
+  // שעון ותאריך
+  const DAYS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  const MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('clock').textContent = h + ':' + m;
+    document.getElementById('dateDisplay').textContent =
+      `יום ${DAYS[now.getDay()]} | ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // עסקים
+  async function loadBusinesses() {
+    const data = await fetch('/api/businesses').then(r => r.json());
+    const el = document.getElementById('bizScroll');
+    if (!data.length) { el.innerHTML = '<div style="padding:20px;color:#aaa;text-align:center">אין עסקים עדיין</div>'; return; }
+    const items = data.map(b => `
+      <div class="biz-item">
+        <div class="biz-name">${b.name}</div>
+        <div class="biz-room">חדר ${b.office}</div>
+      </div>
+    `).join('');
+    el.innerHTML = items + items; // כפול לאנימציה חלקה
+  }
+  loadBusinesses();
+  setInterval(loadBusinesses, 60000);
+
+  // עדכוני בניין
+  async function loadUpdates() {
+    const data = await fetch('/api/updates').then(r => r.json());
+    const el = document.getElementById('updatesTicker');
+    if (!data.length) return;
+    const items = data.map(u => `<span class="update-item">${u.text}</span>`).join('');
+    el.innerHTML = items + items;
+  }
+  loadUpdates();
+  setInterval(loadUpdates, 5 * 60 * 1000);
+
+  // פרסומות
+  let adIndex = 0, adTimer = null, adsData = [];
+  async function loadAds() {
+    adsData = await fetch('/api/ads').then(r => r.json());
+    renderAds();
+  }
+  function renderAds() {
+    const container = document.getElementById('adSlides');
+    const dots = document.getElementById('adDots');
+    if (!adsData.length) {
+      container.innerHTML = '<div class="no-ads"><span>📭</span>אין פרסומות פעילות כרגע</div>';
+      dots.innerHTML = '';
+      return;
+    }
+    container.innerHTML = adsData.map((ad, i) => `
+      <div class="ad-slide ${i===0?'active':''}" id="ad-${i}">
+        ${ad.type==='video'
+          ? `<video src="${ad.url}" autoplay muted loop></video>`
+          : `<img src="${ad.url}" alt="${ad.title}">`}
+        <div class="ad-title">${ad.title}</div>
+      </div>
+    `).join('');
+    dots.innerHTML = adsData.map((_,i) =>
+      `<div class="ad-dot ${i===0?'active':''}" id="dot-${i}"></div>`).join('');
+    adIndex = 0;
+    if (adTimer) clearTimeout(adTimer);
+    scheduleNext();
+  }
+  function scheduleNext() {
+    if (!adsData.length) return;
+    adTimer = setTimeout(() => {
+      document.getElementById('ad-'+adIndex)?.classList.remove('active');
+      document.getElementById('dot-'+adIndex)?.classList.remove('active');
+      adIndex = (adIndex+1) % adsData.length;
+      document.getElementById('ad-'+adIndex)?.classList.add('active');
+      document.getElementById('dot-'+adIndex)?.classList.add('active');
+      scheduleNext();
+    }, (adsData[adIndex].duration||6)*1000);
+  }
+  loadAds();
+  setInterval(loadAds, 5*60*1000);
+
+  // חדשות ynet
+  async function loadNews() {
+    const data = await fetch('/api/news').then(r => r.json());
+    if (!data.length) return;
+    const el = document.getElementById('newsTicker');
+    const items = data.map(n => `<span class="news-item">${n}</span>`).join('');
+    el.innerHTML = items + items;
+  }
+  loadNews();
+  setInterval(loadNews, 5*60*1000);
+</script>
+</body>
+</html>

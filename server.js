@@ -158,6 +158,7 @@ app.delete('/api/ads/:id', requireAuth, (req, res) => {
 });
 
 // --- דפים ---
+app.get('/screen', (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen.html')));
 app.get('/screen1', (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen1.html')));
 app.get('/screen2', (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen2.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));

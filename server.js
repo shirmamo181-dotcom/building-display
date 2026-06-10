@@ -48,7 +48,9 @@ const writeData = (file, data) => fs.writeFileSync(dataPath(file), JSON.stringif
 let newsCache = [];
 async function fetchNews() {
   try {
-    const res = await fetch('https://www.ynet.co.il/Integration/StoryRss2.xml');
+    const res = await fetch('https://www.ynet.co.il/Integration/StoryRss2.xml', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BuildingDisplay/1.0)' }
+    });
     const xml = await res.text();
     const result = await xml2js.parseStringPromise(xml);
     newsCache = result.rss.channel[0].item.slice(0, 15).map(i => i.title[0]);

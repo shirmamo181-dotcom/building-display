@@ -534,8 +534,11 @@
     function step(lastTs) {
       return function(ts) {
         const dt = Math.min((ts - lastTs) / 1000, 0.1);
-        x -= speed * dt;
-        if (halfW > 0 && x <= -halfW) x += halfW;
+        x -= speed * dt; // speed חיובי = ימין לשמאל, שלילי = שמאל לימין
+        if (halfW > 0) {
+          if (speed > 0 && x <= -halfW) x += halfW; // ימין לשמאל
+          if (speed < 0 && x >= 0)      x -= halfW; // שמאל לימין
+        }
         el().style.transform = `translateX(${x}px)`;
         raf = requestAnimationFrame(step(ts));
       };
@@ -546,13 +549,16 @@
     }
     function setContent(html) {
       el().innerHTML = html;
-      requestAnimationFrame(() => { halfW = el().scrollWidth / 2; });
+      requestAnimationFrame(() => {
+        halfW = el().scrollWidth / 2;
+        if (speed < 0) x = -halfW; // שמאל לימין — מתחיל מהסוף
+      });
     }
     return { start, setContent };
   }
 
-  const newsTicker  = createTicker('newsTicker',    80);
-  const updatesTicker = createTicker('updatesTicker', 50);
+  const newsTicker  = createTicker('newsTicker',    -80);
+  const updatesTicker = createTicker('updatesTicker', -50);
   newsTicker.start();
   updatesTicker.start();
 

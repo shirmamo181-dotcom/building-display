@@ -181,13 +181,14 @@
   .biz-room {
     background: #1a2f6e;
     color: #fff;
-    font-size: 0.9rem;
-    font-weight: 700;
-    padding: 6px 14px;
-    border-radius: 8px;
-    min-width: 64px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 6px;
+    min-width: 52px;
     text-align: center;
     flex-shrink: 0;
+    white-space: nowrap;
   }
 
   /* === פרסומות === */
@@ -379,7 +380,7 @@
           <div class="biz-name">${b.name}</div>
           ${b.description ? `<div class="biz-desc">${b.description}</div>` : ''}
         </div>
-        <div class="biz-room">חדר ${b.office}</div>
+        <div class="biz-room">חדר מס' ${b.office}</div>
       </div>
     `).join('');
     el.innerHTML = items + items; // כפול לאנימציה חלקה

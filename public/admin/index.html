@@ -81,6 +81,31 @@
     border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem;
   }
   .btn-del:hover { background: #ff6b6b; color: #fff; }
+  .btn-edit {
+    background: transparent; color: #4a9eff; border: 1px solid #4a9eff;
+    border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem;
+  }
+  .btn-edit:hover { background: #4a9eff; color: #fff; }
+  .biz-desc-tag { font-size: 0.8rem; color: #888; margin-top: 2px; }
+  .inline-edit-form {
+    display: none; margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid #2a2a5a; gap: 10px; flex-wrap: wrap;
+  }
+  .inline-edit-form.open { display: flex; }
+  .inline-edit-form input {
+    flex: 1; min-width: 120px; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid #4a4aff; background: #0f0f1e; color: #fff;
+    font-size: 0.9rem; text-align: right;
+  }
+  .btn-save {
+    background: #2ecc71; color: #fff; border: none; border-radius: 8px;
+    padding: 10px 20px; cursor: pointer; font-size: 0.9rem; white-space: nowrap;
+  }
+  .btn-save:hover { background: #27ae60; }
+  .btn-cancel {
+    background: transparent; color: #aaa; border: 1px solid #444;
+    border-radius: 8px; padding: 10px 16px; cursor: pointer; font-size: 0.9rem;
+  }
 
   /* Form */
   .add-form { background: #12122a; border: 1px solid #2a2a5a; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
@@ -163,7 +188,8 @@
         <h3>הוספת עסק חדש</h3>
         <div class="form-row">
           <input type="text" id="newBizName" placeholder="שם העסק">
-          <input type="text" id="newBizOffice" placeholder="מספר משרד" style="max-width:150px">
+          <input type="text" id="newBizOffice" placeholder="מספר חדר" style="max-width:130px">
+          <input type="text" id="newBizDesc" placeholder="תיאור העסק (אופציונלי)">
           <button class="btn-add" onclick="addBusiness()">+ הוסף</button>
         </div>
       </div>
@@ -245,24 +271,54 @@ async function loadBusinesses() {
   el.innerHTML = data.map(b => `
     <div class="card">
       <div class="card-row">
-        <span>${b.name}</span>
-        <span class="office-tag">משרד ${b.office}</span>
+        <div style="flex:1">
+          <div style="font-size:1.05rem;font-weight:600">${b.name}</div>
+          ${b.description ? `<div class="biz-desc-tag">${b.description}</div>` : ''}
+        </div>
+        <span class="office-tag">חדר מס' ${b.office}</span>
+        <button class="btn-edit" onclick="toggleEdit(${b.id})">ערוך</button>
         <button class="btn-del" onclick="deleteBusiness(${b.id})">מחק</button>
+      </div>
+      <div class="inline-edit-form" id="edit-${b.id}">
+        <input type="text" id="edit-name-${b.id}" value="${b.name}" placeholder="שם העסק">
+        <input type="text" id="edit-office-${b.id}" value="${b.office}" placeholder="מספר חדר" style="max-width:120px">
+        <input type="text" id="edit-desc-${b.id}" value="${b.description||''}" placeholder="תיאור העסק">
+        <button class="btn-save" onclick="saveBusiness(${b.id})">שמור</button>
+        <button class="btn-cancel" onclick="toggleEdit(${b.id})">ביטול</button>
       </div>
     </div>
   `).join('');
 }
 
+function toggleEdit(id) {
+  const form = document.getElementById('edit-' + id);
+  form.classList.toggle('open');
+}
+
+async function saveBusiness(id) {
+  const name = document.getElementById('edit-name-' + id).value.trim();
+  const office = document.getElementById('edit-office-' + id).value.trim();
+  const description = document.getElementById('edit-desc-' + id).value.trim();
+  if (!name || !office) return alert('נא למלא שם ומספר חדר');
+  await fetch('/api/businesses/' + id, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ name, office, description })
+  });
+  loadBusinesses();
+}
+
 async function addBusiness() {
   const name = document.getElementById('newBizName').value.trim();
   const office = document.getElementById('newBizOffice').value.trim();
-  if (!name || !office) return alert('נא למלא שם ומספר משרד');
+  const description = document.getElementById('newBizDesc').value.trim();
+  if (!name || !office) return alert('נא למלא שם ומספר חדר');
   await fetch('/api/businesses', {
     method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ name, office })
+    body: JSON.stringify({ name, office, description })
   });
   document.getElementById('newBizName').value = '';
   document.getElementById('newBizOffice').value = '';
+  document.getElementById('newBizDesc').value = '';
   loadBusinesses();
 }
 

@@ -1,30 +1,50 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const fetch = require('node-fetch');
 const xml2js = require('xml2js');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const path = require('path');
 const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ADMIN_PASSWORD_HASH = bcrypt.hashSync('admin123', 10); // שני תשנה את זה
+const ADMIN_PASSWORD_HASH = bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'admin123', 10);
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => ({
+    folder: 'building-display',
+    resource_type: file.mimetype.startsWith('video') ? 'video' : 'image',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'webm'],
+  }),
+});
+const upload = multer({ storage });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
-app.use('/uploads', express.static('uploads'));
-app.use(session({ secret: 'building-secret-key', resave: false, saveUninitialized: false }));
-
-const upload = multer({ dest: 'uploads/' });
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'building-secret',
+  resave: false,
+  saveUninitialized: false
+}));
 
 // --- נתונים ---
 const dataPath = (file) => path.join(__dirname, 'data', file);
 const readData = (file) => JSON.parse(fs.readFileSync(dataPath(file), 'utf8'));
 const writeData = (file, data) => fs.writeFileSync(dataPath(file), JSON.stringify(data, null, 2));
 
-// --- מבזקי ynet (מתעדכן כל 10 דקות) ---
+// --- מבזקי ynet ---
 let newsCache = [];
 async function fetchNews() {
   try {
@@ -33,19 +53,19 @@ async function fetchNews() {
     const result = await xml2js.parseStringPromise(xml);
     newsCache = result.rss.channel[0].item.slice(0, 15).map(i => i.title[0]);
   } catch (e) {
-    console.log('שגיאה בשליפת ynet:', e.message);
+    console.log('שגיאה ynet:', e.message);
   }
 }
 fetchNews();
 setInterval(fetchNews, 10 * 60 * 1000);
 
-// --- API ---
+// --- API ציבורי ---
 app.get('/api/businesses', (req, res) => res.json(readData('businesses.json')));
 app.get('/api/updates', (req, res) => res.json(readData('updates.json')));
 app.get('/api/ads', (req, res) => res.json(readData('ads.json').filter(a => a.active)));
 app.get('/api/news', (req, res) => res.json(newsCache));
 
-// --- Admin auth ---
+// --- Auth ---
 function requireAuth(req, res, next) {
   if (req.session.admin) return next();
   res.status(401).json({ error: 'לא מחובר' });
@@ -115,7 +135,7 @@ app.post('/api/ads', requireAuth, upload.single('file'), (req, res) => {
     id: Date.now(),
     title: req.body.title,
     type: req.body.type,
-    url: req.file ? '/uploads/' + req.file.filename : req.body.url,
+    url: req.file ? req.file.path : req.body.url,
     duration: parseInt(req.body.duration) || 6,
     active: req.body.active === 'true'
   };
@@ -137,9 +157,9 @@ app.delete('/api/ads/:id', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-// --- דפי המסכים ---
+// --- דפים ---
 app.get('/screen1', (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen1.html')));
 app.get('/screen2', (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen2.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
 
-app.listen(PORT, () => console.log(`המערכת רצה על http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`שרת רץ על פורט ${PORT}`));

@@ -355,20 +355,18 @@
     flex: 1;
     overflow: hidden;
     margin: 0 14px;
+    direction: ltr;
   }
   .news-ticker {
     display: inline-block;
     white-space: nowrap;
-    animation: newsTicker 80s linear infinite;
+    direction: ltr;
     font-size: 0.88rem;
     color: rgba(237,232,220,0.65);
     font-weight: 300;
+    will-change: transform;
   }
-  @keyframes newsTicker {
-    from { transform: translateX(0%); }
-    to   { transform: translateX(-50%); }
-  }
-  .news-item { display: inline-flex; align-items: center; gap: 8px; margin-left: 64px; }
+  .news-item { display: inline-flex; align-items: center; gap: 8px; margin-right: 64px; direction: rtl; }
   .news-item::before { content: '◆'; color: var(--gold); font-size: 0.65rem; flex-shrink: 0; }
   .news-time {
     background: var(--gold-dim);
@@ -525,12 +523,30 @@
   loadAds();
   setInterval(loadAds, 5*60*1000);
 
-  // חדשות ynet
+  // חדשות ynet — גלילה חלקה ואינסופית עם requestAnimationFrame
   function fmtTime(pubDate) {
     if (!pubDate) return '';
     const d = new Date(pubDate);
     if (isNaN(d)) return '';
     return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  let tickerX = 0, tickerHalfW = 0, tickerRAF = null;
+  const TICKER_SPEED = 80; // px/sec
+
+  function tickerStep(lastTs) {
+    return function step(ts) {
+      const dt = Math.min((ts - lastTs) / 1000, 0.1);
+      tickerX -= TICKER_SPEED * dt;
+      if (tickerHalfW > 0 && tickerX <= -tickerHalfW) tickerX += tickerHalfW;
+      document.getElementById('newsTicker').style.transform = `translateX(${tickerX}px)`;
+      tickerRAF = requestAnimationFrame(tickerStep(ts));
+    };
+  }
+
+  function startTicker() {
+    if (tickerRAF) cancelAnimationFrame(tickerRAF);
+    tickerRAF = requestAnimationFrame(ts => { tickerRAF = requestAnimationFrame(tickerStep(ts)); });
   }
 
   async function loadNews() {
@@ -542,15 +558,15 @@
       const time = typeof n === 'object' ? fmtTime(n.pubDate) : '';
       return `<span class="news-item">${time ? `<span class="news-time">${time}</span>` : ''}${t}</span>`;
     }).join('');
-    const half = makeItems();
-    el.innerHTML = half + half;
-    // מהירות דינמית: ~90px לשניה, מחושב לפי אורך הטקסט
-    const totalPx = el.scrollWidth / 2;
-    const dur = Math.max(60, Math.round(totalPx / 90));
-    el.style.animationDuration = dur + 's';
+    el.innerHTML = makeItems() + makeItems();
+    requestAnimationFrame(() => {
+      tickerHalfW = el.scrollWidth / 2;
+    });
   }
+
   loadNews();
-  setInterval(loadNews, 5*60*1000);
+  setInterval(loadNews, 5 * 60 * 1000);
+  startTicker();
 </script>
 </body>
 </html>

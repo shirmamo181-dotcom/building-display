@@ -473,7 +473,6 @@
         ${ad.type==='video'
           ? `<video src="${ad.url}" autoplay muted loop></video>`
           : `<img src="${ad.url}" alt="${ad.title}">`}
-        <div class="ad-title">${ad.title}</div>
       </div>
     `).join('');
     dots.innerHTML = adsData.map((_,i) =>

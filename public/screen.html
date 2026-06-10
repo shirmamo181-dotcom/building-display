@@ -160,10 +160,23 @@
     transition: background 0.2s;
   }
   .biz-item:hover { background: #eef2ff; }
+  .biz-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+  }
   .biz-name {
     font-size: 1.05rem;
     font-weight: 600;
     color: #1a2340;
+    line-height: 1.2;
+  }
+  .biz-desc {
+    font-size: 0.63rem;
+    font-weight: 400;
+    color: #6b7a99;
+    line-height: 1.2;
   }
   .biz-room {
     background: #1a2f6e;
@@ -362,7 +375,10 @@
     if (!data.length) { el.innerHTML = '<div style="padding:20px;color:#aaa;text-align:center">אין עסקים עדיין</div>'; return; }
     const items = data.map(b => `
       <div class="biz-item">
-        <div class="biz-name">${b.name}</div>
+        <div class="biz-info">
+          <div class="biz-name">${b.name}</div>
+          ${b.description ? `<div class="biz-desc">${b.description}</div>` : ''}
+        </div>
         <div class="biz-room">חדר ${b.office}</div>
       </div>
     `).join('');

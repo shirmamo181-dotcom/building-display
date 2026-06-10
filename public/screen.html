@@ -368,8 +368,19 @@
     from { transform: translateX(0%); }
     to   { transform: translateX(-50%); }
   }
-  .news-item { display: inline-block; margin-left: 64px; }
-  .news-item::before { content: '◆  '; color: var(--gold); font-size: 0.65rem; }
+  .news-item { display: inline-flex; align-items: center; gap: 8px; margin-left: 64px; }
+  .news-item::before { content: '◆'; color: var(--gold); font-size: 0.65rem; flex-shrink: 0; }
+  .news-time {
+    background: var(--gold-dim);
+    color: var(--gold-light);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--gold-border);
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
 </style>
 </head>
 <body>
@@ -515,12 +526,28 @@
   setInterval(loadAds, 5*60*1000);
 
   // חדשות ynet
+  function fmtTime(pubDate) {
+    if (!pubDate) return '';
+    const d = new Date(pubDate);
+    if (isNaN(d)) return '';
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
   async function loadNews() {
     const data = await fetch('/api/news').then(r => r.json());
     if (!data.length) return;
     const el = document.getElementById('newsTicker');
-    const items = data.map(n => `<span class="news-item">${n}</span>`).join('');
-    el.innerHTML = items + items;
+    const makeItems = () => data.map(n => {
+      const t = typeof n === 'object' ? n.title : n;
+      const time = typeof n === 'object' ? fmtTime(n.pubDate) : '';
+      return `<span class="news-item">${time ? `<span class="news-time">${time}</span>` : ''}${t}</span>`;
+    }).join('');
+    const half = makeItems();
+    el.innerHTML = half + half;
+    // מהירות דינמית: ~90px לשניה, מחושב לפי אורך הטקסט
+    const totalPx = el.scrollWidth / 2;
+    const dur = Math.max(60, Math.round(totalPx / 90));
+    el.style.animationDuration = dur + 's';
   }
   loadNews();
   setInterval(loadNews, 5*60*1000);

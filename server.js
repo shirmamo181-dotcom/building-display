@@ -68,7 +68,10 @@ async function fetchNews() {
     });
     const xml = await res.text();
     const result = await xml2js.parseStringPromise(xml);
-    newsCache = result.rss.channel[0].item.slice(0, 15).map(i => i.title[0]);
+    newsCache = result.rss.channel[0].item.slice(0, 15).map(i => ({
+      title: i.title[0],
+      pubDate: i.pubDate ? i.pubDate[0] : ''
+    }));
   } catch (e) {
     console.log('שגיאה ynet:', e.message);
   }

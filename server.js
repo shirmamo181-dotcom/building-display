@@ -197,6 +197,15 @@ app.delete('/api/ads/:id', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+// --- ערכת נושא ---
+app.get('/api/theme', (req, res) => {
+  try { res.json(readData('theme.json')); } catch { res.json({ theme: 'wood' }); }
+});
+app.post('/api/theme', requireAuth, (req, res) => {
+  writeData('theme.json', { theme: req.body.theme });
+  res.json({ ok: true });
+});
+
 // --- דפים ---
 app.get('/screen', (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen.html')));
 app.get('/screen1', (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen1.html')));

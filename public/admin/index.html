@@ -106,6 +106,21 @@
     background: transparent; color: #aaa; border: 1px solid #444;
     border-radius: 8px; padding: 10px 16px; cursor: pointer; font-size: 0.9rem;
   }
+  .theme-card {
+    border-radius: 14px; overflow: hidden; cursor: pointer;
+    border: 3px solid transparent; transition: border 0.2s, transform 0.15s;
+  }
+  .theme-card:hover { transform: scale(1.03); }
+  .theme-card.active { border-color: #4a4aff; }
+  .theme-preview {
+    height: 100px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6px;
+  }
+  .theme-preview span { font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; }
+  .theme-name {
+    background: #1a1a3e; padding: 10px 14px; font-size: 0.9rem;
+    font-weight: 600; text-align: center;
+  }
 
   /* Form */
   .add-form { background: #12122a; border: 1px solid #2a2a5a; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
@@ -177,6 +192,7 @@
     <div class="tab active" onclick="showTab('businesses', this)">🏪 עסקים</div>
     <div class="tab" onclick="showTab('ads', this)">📢 פרסומות</div>
     <div class="tab" onclick="showTab('updates', this)">📋 עדכונים</div>
+    <div class="tab" onclick="showTab('themes', this)">🎨 ערכות נושא</div>
   </div>
 
   <div class="content">
@@ -228,6 +244,12 @@
       <div id="updateList"></div>
     </div>
 
+    <!-- ערכות נושא -->
+    <div class="section" id="section-themes">
+      <div class="section-title">ערכות נושא למסך</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:16px" id="themeGrid"></div>
+    </div>
+
   </div>
 </div>
 
@@ -259,6 +281,7 @@ function showTab(name, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('section-' + name).classList.add('active');
+  if (name === 'themes') loadThemes();
 }
 
 function loadAll() { loadBusinesses(); loadAds(); loadUpdates(); }
@@ -469,6 +492,38 @@ async function reorderUpdate(id, direction) {
   });
   if (res.status === 401) { alert('פג תוקף הכניסה — נא להתחבר מחדש'); location.reload(); return; }
   loadUpdates();
+}
+
+// --- ערכות נושא ---
+const THEMES = [
+  { id: 'wood',     name: 'עץ יוקרתי',     bg: 'linear-gradient(135deg,#3b1e0a,#1c1208)',  accent: '#c9a257', text: '#ede0cc' },
+  { id: 'navy',     name: 'כחול עמוק',      bg: 'linear-gradient(135deg,#0d2a4a,#020810)',  accent: '#7eb8d4', text: '#ddeeff' },
+  { id: 'white',    name: 'מינימל בהיר',    bg: 'linear-gradient(135deg,#e8edf8,#dfe5f5)',  accent: '#1a3a6e', text: '#1a2340' },
+  { id: 'green',    name: 'ירוק יוקרתי',    bg: 'linear-gradient(135deg,#0d3320,#030d06)',  accent: '#c9a257', text: '#d8ede0' },
+  { id: 'charcoal', name: 'אפור מודרני',    bg: 'linear-gradient(135deg,#1c1c1c,#0e0e0e)',  accent: '#e0e0e0', text: '#f0f0f0' },
+];
+
+async function loadThemes() {
+  const { theme: current } = await fetch('/api/theme').then(r => r.json()).catch(() => ({ theme: 'wood' }));
+  const grid = document.getElementById('themeGrid');
+  grid.innerHTML = THEMES.map(t => `
+    <div class="theme-card ${t.id === current ? 'active' : ''}" onclick="setTheme('${t.id}')">
+      <div class="theme-preview" style="background:${t.bg}">
+        <div style="width:60%;height:8px;border-radius:4px;background:${t.accent};opacity:0.8"></div>
+        <span style="color:${t.text}">◈ ${t.name}</span>
+        <div style="width:40%;height:4px;border-radius:4px;background:${t.accent};opacity:0.4"></div>
+      </div>
+      <div class="theme-name">${t.name}${t.id === current ? ' ✓' : ''}</div>
+    </div>
+  `).join('');
+}
+
+async function setTheme(id) {
+  await fetch('/api/theme', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ theme: id })
+  });
+  loadThemes();
 }
 </script>
 </body>

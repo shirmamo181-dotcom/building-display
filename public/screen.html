@@ -20,12 +20,50 @@
     --bar-bg: rgba(10,7,3,0.90);
   }
 
+  /* ===== ערכות נושא ===== */
+  /* wood (ברירת מחדל) */
+  body.theme-wood {
+    background-image: linear-gradient(rgba(0,0,0,0.68),rgba(0,0,0,0.68)), url('/wood-bg.webp');
+    background-size: cover; background-position: center;
+  }
+  /* navy — כחול כהה יוקרתי */
+  body.theme-navy {
+    --gold: #7eb8d4; --gold-light: #a8d4e8;
+    --gold-dim: rgba(126,184,212,0.13); --gold-border: rgba(126,184,212,0.25);
+    --surface: rgba(5,15,35,0.75); --surface-hover: rgba(5,15,35,0.88);
+    --text: #ddeeff; --text-dim: #5a7a99; --bar-bg: rgba(3,10,25,0.92);
+    background: radial-gradient(ellipse at 60% 0%, #0d2a4a 0%, #050f1e 60%, #020810 100%);
+  }
+  /* white — מינימל בהיר */
+  body.theme-white {
+    --gold: #1a3a6e; --gold-light: #2a4e8e;
+    --gold-dim: rgba(26,58,110,0.10); --gold-border: rgba(26,58,110,0.22);
+    --surface: rgba(255,255,255,0.65); --surface-hover: rgba(255,255,255,0.85);
+    --text: #1a2340; --text-dim: #6a7a99; --bar-bg: rgba(240,244,255,0.95);
+    background: linear-gradient(160deg, #e8edf8 0%, #f4f7ff 50%, #dfe5f5 100%);
+  }
+  body.theme-white .top-bar,
+  body.theme-white .news-bar { background: var(--bar-bg); border-color: var(--gold-border); }
+  body.theme-white .biz-item { border-right-color: var(--gold); }
+  body.theme-white .news-label { background: var(--gold); color: #fff; }
+  /* green — יוקרתי ירוק */
+  body.theme-green {
+    --gold: #c9a257; --gold-light: #e8c97a;
+    --gold-dim: rgba(201,162,87,0.13); --gold-border: rgba(201,162,87,0.22);
+    --surface: rgba(5,25,15,0.75); --surface-hover: rgba(5,25,15,0.88);
+    --text: #d8ede0; --text-dim: #527a60; --bar-bg: rgba(3,15,8,0.92);
+    background: radial-gradient(ellipse at 40% 10%, #0d3320 0%, #061a0e 55%, #030d06 100%);
+  }
+  /* charcoal — אפור מודרני */
+  body.theme-charcoal {
+    --gold: #e0e0e0; --gold-light: #ffffff;
+    --gold-dim: rgba(220,220,220,0.10); --gold-border: rgba(220,220,220,0.20);
+    --surface: rgba(255,255,255,0.05); --surface-hover: rgba(255,255,255,0.09);
+    --text: #f0f0f0; --text-dim: #707070; --bar-bg: rgba(10,10,10,0.95);
+    background: linear-gradient(160deg, #1c1c1c 0%, #141414 50%, #0e0e0e 100%);
+  }
+
   body {
-    background-image:
-      linear-gradient(rgba(0,0,0,0.68), rgba(0,0,0,0.68)),
-      url('/wood-bg.webp');
-    background-size: cover;
-    background-position: center;
     color: var(--text);
     font-family: 'Heebo', Arial, sans-serif;
     height: 100vh;
@@ -188,6 +226,9 @@
     border-radius: 10px;
     transition: background 0.2s, border-color 0.2s;
   }
+  .biz-item.alt {
+    background: rgba(201,162,87,0.06);
+  }
   .biz-item:hover {
     background: var(--surface-hover);
     border-color: var(--gold-border);
@@ -213,12 +254,12 @@
   .biz-room {
     background: var(--gold-dim);
     color: var(--gold-light);
-    font-size: 0.68rem;
-    font-weight: 600;
-    padding: 4px 9px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 5px 12px;
     border-radius: 6px;
     border: 1px solid var(--gold-border);
-    min-width: 52px;
+    min-width: 60px;
     text-align: center;
     flex-shrink: 0;
     white-space: nowrap;
@@ -325,6 +366,18 @@
   }
   .ad-dot.active { background: var(--gold); }
 
+  /* שורת פרסום קבועה */
+  .promo-contact-bar {
+    background: rgba(201,162,87,0.08);
+    border-top: 1px solid var(--gold-border);
+    padding: 7px 16px;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+
   /* ===== רצועת חדשות תחתית ===== */
   .news-bar {
     background: var(--bar-bg);
@@ -422,6 +475,7 @@
       <div id="adSlides"></div>
     </div>
     <div class="ad-dots" id="adDots"></div>
+    <div class="promo-contact-bar">לפרסום העסק שלכם על מסך הבניין חייגו ✦ 052-6060848</div>
   </div>
 
 </div>
@@ -435,6 +489,14 @@
 </div>
 
 <script>
+  // ערכת נושא
+  async function loadTheme() {
+    const data = await fetch('/api/theme').then(r => r.json()).catch(() => ({ theme: 'wood' }));
+    document.body.className = 'theme-' + (data.theme || 'wood');
+  }
+  loadTheme();
+  setInterval(loadTheme, 30 * 1000);
+
   // שעון ותאריך
   const DAYS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
   const MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
@@ -454,13 +516,13 @@
     const data = await fetch('/api/businesses').then(r => r.json());
     const el = document.getElementById('bizScroll');
     if (!data.length) { el.innerHTML = '<div style="padding:20px;color:#aaa;text-align:center">אין עסקים עדיין</div>'; return; }
-    const items = data.map(b => `
-      <div class="biz-item">
+    const items = data.map((b, i) => `
+      <div class="biz-item${i % 2 === 1 ? ' alt' : ''}">
         <div class="biz-info">
           <div class="biz-name">${b.name}</div>
           ${b.description ? `<div class="biz-desc">${b.description}</div>` : ''}
         </div>
-        <div class="biz-room">חדר מס' ${b.office}</div>
+        <div class="biz-room">חדר ${b.office}</div>
       </div>
     `).join('');
     el.innerHTML = items + items; // כפול לאנימציה חלקה

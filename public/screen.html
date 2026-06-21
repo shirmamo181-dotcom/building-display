@@ -530,7 +530,7 @@
           <div class="biz-name">${b.name}</div>
           ${b.description ? `<div class="biz-desc">${b.description}</div>` : ''}
         </div>
-        <div class="biz-room">חדר ${b.office}</div>
+        <div class="biz-room">${b.floor ? `<span style="font-size:0.72rem;opacity:0.75;display:block;margin-bottom:1px">קומה ${b.floor}</span>` : ''}חדר ${b.office}</div>
       </div>
     `).join('');
     el.innerHTML = items + items; // כפול לאנימציה חלקה

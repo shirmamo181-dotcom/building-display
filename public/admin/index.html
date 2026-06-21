@@ -213,7 +213,8 @@
         <h3>הוספת עסק חדש</h3>
         <div class="form-row">
           <input type="text" id="newBizName" placeholder="שם העסק">
-          <input type="text" id="newBizOffice" placeholder="מספר חדר" style="max-width:130px">
+          <input type="text" id="newBizOffice" placeholder="מספר חדר" style="max-width:110px">
+          <input type="text" id="newBizFloor" placeholder="קומה" style="max-width:80px">
           <input type="text" id="newBizDesc" placeholder="תיאור העסק (אופציונלי)">
           <button class="btn-add" onclick="addBusiness()">+ הוסף</button>
         </div>
@@ -307,13 +308,14 @@ async function loadBusinesses() {
           <div style="font-size:1.05rem;font-weight:600">${b.name}</div>
           ${b.description ? `<div class="biz-desc-tag">${b.description}</div>` : ''}
         </div>
-        <span class="office-tag">חדר מס' ${b.office}</span>
+        <span class="office-tag">${b.floor ? `קומה ${b.floor} | ` : ''}חדר ${b.office}</span>
         <button class="btn-edit" onclick="toggleEdit(${b.id})">ערוך</button>
         <button class="btn-del" onclick="deleteBusiness(${b.id})">מחק</button>
       </div>
       <div class="inline-edit-form" id="edit-${b.id}">
         <input type="text" id="edit-name-${b.id}" value="${b.name}" placeholder="שם העסק">
-        <input type="text" id="edit-office-${b.id}" value="${b.office}" placeholder="מספר חדר" style="max-width:120px">
+        <input type="text" id="edit-office-${b.id}" value="${b.office}" placeholder="מספר חדר" style="max-width:110px">
+        <input type="text" id="edit-floor-${b.id}" value="${b.floor||''}" placeholder="קומה" style="max-width:80px">
         <input type="text" id="edit-desc-${b.id}" value="${b.description||''}" placeholder="תיאור העסק">
         <button class="btn-save" onclick="saveBusiness(${b.id})">שמור</button>
         <button class="btn-cancel" onclick="toggleEdit(${b.id})">ביטול</button>
@@ -330,11 +332,12 @@ function toggleEdit(id) {
 async function saveBusiness(id) {
   const name = document.getElementById('edit-name-' + id).value.trim();
   const office = document.getElementById('edit-office-' + id).value.trim();
+  const floor = document.getElementById('edit-floor-' + id).value.trim();
   const description = document.getElementById('edit-desc-' + id).value.trim();
   if (!name || !office) return alert('נא למלא שם ומספר חדר');
   await fetch('/api/businesses/' + id, {
     method: 'PUT', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ name, office, description })
+    body: JSON.stringify({ name, office, floor, description })
   });
   loadBusinesses();
 }
@@ -342,15 +345,17 @@ async function saveBusiness(id) {
 async function addBusiness() {
   const name = document.getElementById('newBizName').value.trim();
   const office = document.getElementById('newBizOffice').value.trim();
+  const floor = document.getElementById('newBizFloor').value.trim();
   const description = document.getElementById('newBizDesc').value.trim();
   if (!name || !office) return alert('נא למלא שם ומספר חדר');
   const res = await fetch('/api/businesses', {
     method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ name, office, description })
+    body: JSON.stringify({ name, office, floor, description })
   });
   if (res.status === 401) { alert('פג תוקף הכניסה — נא להתחבר מחדש'); location.reload(); return; }
   document.getElementById('newBizName').value = '';
   document.getElementById('newBizOffice').value = '';
+  document.getElementById('newBizFloor').value = '';
   document.getElementById('newBizDesc').value = '';
   loadBusinesses();
 }

@@ -518,7 +518,7 @@
 
   function drawAnalogClock() {
     const canvas = document.getElementById('analogClock');
-    if (!canvas || canvas.style.display === 'none') return;
+    if (!canvas || getComputedStyle(canvas).display === 'none') return;
     const ctx = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
     const cx = W / 2, cy = H / 2, r = W / 2 - 3;

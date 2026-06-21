@@ -447,7 +447,7 @@
     </div>
   </div>
 
-  <div class="building-name">◈ מרכז עסקים | התע"ש 10</div>
+  <div class="building-name" id="buildingName">◈ מרכז עסקים | התע"ש 10</div>
 </div>
 
 <!-- גוף ראשי -->
@@ -489,6 +489,14 @@
 </div>
 
 <script>
+  // שם בניין
+  async function loadBuildingName() {
+    const data = await fetch('/api/settings').then(r => r.json()).catch(() => ({}));
+    if (data.buildingName) document.getElementById('buildingName').textContent = '◈ ' + data.buildingName;
+  }
+  loadBuildingName();
+  setInterval(loadBuildingName, 30 * 1000);
+
   // ערכת נושא
   async function loadTheme() {
     const data = await fetch('/api/theme').then(r => r.json()).catch(() => ({ theme: 'wood' }));

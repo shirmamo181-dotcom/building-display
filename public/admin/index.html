@@ -184,8 +184,17 @@
 <!-- מסך ראשי -->
 <div id="mainScreen">
   <div class="topbar">
-    <h1>🏢 פאנל ניהול בניין</h1>
+    <div style="display:flex;align-items:center;gap:12px;flex:1">
+      <h1>◈ פאנל ניהול</h1>
+      <div id="buildingNameDisplay" style="color:#a0a0ff;font-size:1rem;font-weight:600"></div>
+      <button onclick="showBuildingNameEdit()" style="font-size:0.8rem;padding:5px 10px">✏️ שנה שם</button>
+    </div>
     <button onclick="logout()">יציאה</button>
+  </div>
+  <div id="buildingNameEditBar" style="display:none;background:#12122a;padding:12px 24px;border-bottom:1px solid #2a2a5a;gap:10px;align-items:center">
+    <input type="text" id="buildingNameInput" placeholder="שם הבניין" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid #4a4aff;background:#0f0f1e;color:#fff;font-size:0.95rem;text-align:right;min-width:280px">
+    <button class="btn-primary" style="width:auto;padding:8px 20px" onclick="saveBuildingName()">שמור</button>
+    <button onclick="document.getElementById('buildingNameEditBar').style.display='none'" style="background:transparent;color:#aaa;border:1px solid #444;border-radius:6px;padding:8px 14px;cursor:pointer">ביטול</button>
   </div>
 
   <div class="tabs">
@@ -284,7 +293,7 @@ function showTab(name, el) {
   if (name === 'themes') loadThemes();
 }
 
-function loadAll() { loadBusinesses(); loadAds(); loadUpdates(); }
+function loadAll() { loadBusinesses(); loadAds(); loadUpdates(); loadBuildingName(); }
 
 // --- עסקים ---
 async function loadBusinesses() {
@@ -335,14 +344,38 @@ async function addBusiness() {
   const office = document.getElementById('newBizOffice').value.trim();
   const description = document.getElementById('newBizDesc').value.trim();
   if (!name || !office) return alert('נא למלא שם ומספר חדר');
-  await fetch('/api/businesses', {
+  const res = await fetch('/api/businesses', {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ name, office, description })
   });
+  if (res.status === 401) { alert('פג תוקף הכניסה — נא להתחבר מחדש'); location.reload(); return; }
   document.getElementById('newBizName').value = '';
   document.getElementById('newBizOffice').value = '';
   document.getElementById('newBizDesc').value = '';
   loadBusinesses();
+}
+
+async function loadBuildingName() {
+  const data = await fetch('/api/settings').then(r => r.json()).catch(() => ({}));
+  const name = data.buildingName || '';
+  document.getElementById('buildingNameDisplay').textContent = name;
+  document.getElementById('buildingNameInput').value = name;
+}
+
+function showBuildingNameEdit() {
+  const bar = document.getElementById('buildingNameEditBar');
+  bar.style.display = bar.style.display === 'none' ? 'flex' : 'none';
+}
+
+async function saveBuildingName() {
+  const name = document.getElementById('buildingNameInput').value.trim();
+  if (!name) return alert('נא להזין שם בניין');
+  await fetch('/api/settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ buildingName: name })
+  });
+  document.getElementById('buildingNameEditBar').style.display = 'none';
+  loadBuildingName();
 }
 
 async function deleteBusiness(id) {

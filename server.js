@@ -199,6 +199,16 @@ app.delete('/api/ads/:id', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+// --- הגדרות בניין ---
+app.get('/api/settings', (req, res) => {
+  try { res.json(readData('settings.json')); } catch { res.json({ buildingName: 'מרכז עסקים' }); }
+});
+app.post('/api/settings', requireAuth, (req, res) => {
+  const current = (() => { try { return readData('settings.json'); } catch { return {}; } })();
+  writeData('settings.json', { ...current, ...req.body });
+  res.json({ ok: true });
+});
+
 // --- ערכת נושא ---
 app.get('/api/theme', (req, res) => {
   try { res.json(readData('theme.json')); } catch { res.json({ theme: 'wood' }); }

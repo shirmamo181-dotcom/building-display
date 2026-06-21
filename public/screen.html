@@ -110,8 +110,6 @@
     flex-shrink: 0;
     min-width: 130px;
   }
-  body.theme-wood #digitalClock { display: none; }
-  body.theme-wood #analogClock  { display: block !important; }
   .datetime .time {
     font-size: 1.9rem;
     font-weight: 300;
@@ -438,13 +436,10 @@
 <!-- שורה עליונה -->
 <div class="top-bar">
   <div class="datetime">
-    <!-- שעון דיגיטלי — מוסתר בערכת עץ -->
     <div id="digitalClock">
       <div class="time" id="clock">00:00</div>
       <div class="date" id="dateDisplay"></div>
     </div>
-    <!-- שעון אנלוגי — מוצג רק בערכת עץ -->
-    <canvas id="analogClock" width="68" height="68" style="display:none"></canvas>
   </div>
 
   <div class="updates-ticker-wrap">
@@ -516,80 +511,6 @@
   const DAYS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
   const MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 
-  function drawAnalogClock() {
-    const canvas = document.getElementById('analogClock');
-    if (!canvas || getComputedStyle(canvas).display === 'none') return;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-    const cx = W / 2, cy = H / 2, r = W / 2 - 2;
-    const now = new Date();
-    const sec = now.getSeconds(), min = now.getMinutes(), hr = now.getHours() % 12;
-    ctx.clearRect(0, 0, W, H);
-
-    // טבעת חיצונית — כסף
-    const rimGrad = ctx.createLinearGradient(cx-r, cy-r, cx+r, cy+r);
-    rimGrad.addColorStop(0, '#ffffff');
-    rimGrad.addColorStop(0.4, '#cccccc');
-    rimGrad.addColorStop(1, '#888888');
-    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI);
-    ctx.fillStyle = rimGrad; ctx.fill();
-
-    // פנים — שחור
-    ctx.beginPath(); ctx.arc(cx, cy, r * 0.87, 0, 2*Math.PI);
-    ctx.fillStyle = '#0a0a0a'; ctx.fill();
-
-    // קו פנימי דק
-    ctx.beginPath(); ctx.arc(cx, cy, r * 0.84, 0, 2*Math.PI);
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 0.8; ctx.stroke();
-
-    // מספרים 1–12
-    const numR = r * 0.70;
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = `bold ${Math.round(r * 0.22)}px Arial`;
-    for (let i = 1; i <= 12; i++) {
-      const a = (i * Math.PI) / 6 - Math.PI / 2;
-      const nx = cx + Math.cos(a) * numR;
-      const ny = cy + Math.sin(a) * numR;
-      ctx.fillText(String(i), nx, ny);
-    }
-
-    // סימוני דקות קטנים
-    for (let i = 0; i < 60; i++) {
-      const a = (i * Math.PI) / 30;
-      const isMajor = i % 5 === 0;
-      if (isMajor) continue;
-      const x1 = cx + Math.sin(a) * r * 0.83;
-      const y1 = cy - Math.cos(a) * r * 0.83;
-      const x2 = cx + Math.sin(a) * r * 0.78;
-      const y2 = cy - Math.cos(a) * r * 0.78;
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 0.8; ctx.stroke();
-    }
-
-    const hand = (angle, length, tailLen, width, color) => {
-      ctx.save();
-      ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 4;
-      ctx.beginPath();
-      ctx.moveTo(cx - Math.sin(angle) * tailLen, cy + Math.cos(angle) * tailLen);
-      ctx.lineTo(cx + Math.sin(angle) * length, cy - Math.cos(angle) * length);
-      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = 'round'; ctx.stroke();
-      ctx.restore();
-    };
-
-    // מחוגים
-    hand((hr + min/60) * Math.PI / 6,  r*0.48, r*0.12, 3.5, '#ffffff');  // שעות
-    hand((min + sec/60) * Math.PI / 30, r*0.65, r*0.12, 2.2, '#e0e0e0'); // דקות
-    hand(sec * Math.PI / 30,            r*0.72, r*0.18, 1.2, '#e63946'); // שניות — אדום
-
-    // נקודת מרכז
-    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 2*Math.PI);
-    ctx.fillStyle = '#e63946'; ctx.fill();
-    ctx.beginPath(); ctx.arc(cx, cy, 2, 0, 2*Math.PI);
-    ctx.fillStyle = '#ffffff'; ctx.fill();
-  }
-
   function updateClock() {
     const now = new Date();
     const h = String(now.getHours()).padStart(2,'0');
@@ -597,7 +518,6 @@
     document.getElementById('clock').textContent = h + ':' + m;
     document.getElementById('dateDisplay').textContent =
       `יום ${DAYS[now.getDay()]} | ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
-    drawAnalogClock();
   }
   setInterval(updateClock, 1000);
   updateClock();

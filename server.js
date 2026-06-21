@@ -171,11 +171,13 @@ app.get('/api/ads/all', requireAuth, (req, res) => res.json(readData('ads.json')
 
 app.post('/api/ads', requireAuth, upload.single('file'), (req, res) => {
   const list = readData('ads.json');
+  const fileUrl = req.file ? (req.file.secure_url || req.file.path || '') : (req.body.url || '');
+  console.log('העלאת פרסומת:', req.body.title, '| URL:', fileUrl || 'חסר!');
   const item = {
     id: Date.now(),
     title: req.body.title,
     type: req.body.type,
-    url: req.file ? req.file.path : req.body.url,
+    url: fileUrl,
     duration: parseInt(req.body.duration) || 6,
     active: req.body.active === 'true'
   };

@@ -141,11 +141,20 @@ async function fetchIsraelHayom() {
     const result = await xml2js.parseStringPromise(xml);
     ilHayomCache = result.rss.channel[0].item.slice(0, 12).map(i => {
       let image = '';
+      // נסיון 1: שדות מדיה סטנדרטיים
       if (i.enclosure && i.enclosure[0] && i.enclosure[0].$) image = i.enclosure[0].$.url || '';
       if (!image && i['media:content'] && i['media:content'][0] && i['media:content'][0].$) image = i['media:content'][0].$.url || '';
       if (!image && i['media:thumbnail'] && i['media:thumbnail'][0] && i['media:thumbnail'][0].$) image = i['media:thumbnail'][0].$.url || '';
+      // נסיון 2: חילוץ src מתוך HTML של description
+      if (!image && i.description && i.description[0]) {
+        const m = i.description[0].match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (m) image = m[1];
+      }
+      // נסיון 3: שדה image ישיר
+      if (!image && i.image && i.image[0]) image = typeof i.image[0] === 'string' ? i.image[0] : (i.image[0].url ? i.image[0].url[0] : '');
       return { title: i.title[0], image, pubDate: i.pubDate ? i.pubDate[0] : '' };
     });
+    console.log('ישראל היום — דוגמה:', JSON.stringify(ilHayomCache[0]));
     ilHayomCacheTime = Date.now();
     console.log('ישראל היום עודכן:', ilHayomCache.length, 'פריטים');
   } catch(e) { console.log('שגיאה ישראל היום:', e.message); }

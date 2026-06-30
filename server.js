@@ -130,6 +130,30 @@ app.get('/api/me', (req, res) => {
   res.json({ role: null });
 });
 
+// --- חדשות ישראל היום ---
+let ilHayomCache = [], ilHayomCacheTime = 0;
+async function fetchIsraelHayom() {
+  try {
+    const r = await fetch('https://www.israelhayom.co.il/rss.xml', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+    });
+    const xml = await r.text();
+    const result = await xml2js.parseStringPromise(xml);
+    ilHayomCache = result.rss.channel[0].item.slice(0, 12).map(i => ({
+      title: i.title[0], pubDate: i.pubDate ? i.pubDate[0] : ''
+    }));
+    ilHayomCacheTime = Date.now();
+    console.log('ישראל היום עודכן:', ilHayomCache.length, 'פריטים');
+  } catch(e) { console.log('שגיאה ישראל היום:', e.message); }
+}
+fetchIsraelHayom();
+setInterval(fetchIsraelHayom, 5 * 60 * 1000);
+
+app.get('/api/israelhayom', async (req, res) => {
+  if (Date.now() - ilHayomCacheTime > 5 * 60 * 1000) await fetchIsraelHayom();
+  res.json(ilHayomCache);
+});
+
 // --- חדשות ynet ---
 let newsCache = [], newsCacheTime = 0;
 async function fetchNews() {

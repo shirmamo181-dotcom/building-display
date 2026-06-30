@@ -294,6 +294,65 @@
   }
 
   /* ===== רצועת חדשות תחתית ===== */
+  /* ===== מזג אוויר ===== */
+  .weather-panel { }
+  .weather-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 14px;
+    gap: 0;
+    overflow: hidden;
+  }
+  .weather-current {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 0 14px;
+    border-bottom: 1px solid #eef2f8;
+    flex-shrink: 0;
+  }
+  .weather-icon-big { font-size: 4rem; line-height: 1; }
+  .weather-temp-big {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #1a2340;
+    line-height: 1;
+  }
+  .weather-temp-big sup { font-size: 1.2rem; font-weight: 400; vertical-align: super; }
+  .weather-desc { font-size: 0.88rem; color: #6a7a99; font-weight: 500; margin-top: 2px; }
+  .weather-extra {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 6px;
+  }
+  .weather-extra-item { font-size: 0.75rem; color: #8a9ab5; display: flex; align-items: center; gap: 4px; }
+
+  .weather-forecast {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 12px;
+    flex: 1;
+    overflow: hidden;
+  }
+  .forecast-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: #f5f8ff;
+    flex-shrink: 0;
+  }
+  .forecast-day { font-size: 0.82rem; font-weight: 600; color: #1a2340; min-width: 50px; }
+  .forecast-icon { font-size: 1.3rem; }
+  .forecast-temps { font-size: 0.82rem; color: #6a7a99; font-weight: 500; }
+  .forecast-temps span { color: #1a2340; font-weight: 700; }
+
   .news-bar-wrap {
     flex-shrink: 0;
     position: relative;
@@ -454,18 +513,21 @@
     <div class="promo-contact-bar">לפרסום העסק שלכם על מסך הבניין ◆ 052-6060848</div>
   </div>
 
-  <!-- עדכוני בניין -->
-  <div class="panel updates-panel">
+  <!-- מזג אוויר -->
+  <div class="panel weather-panel" id="weatherPanel">
     <div class="panel-header">
-      <div class="panel-header-icon" style="background:#e8f5fe">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a6aae" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      <div class="panel-header-icon" style="background:#fff3e0">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e67e22" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
         </svg>
       </div>
-      <span class="panel-title">הודעות לדיירים</span>
+      <span class="panel-title">מזג אוויר — תל אביב</span>
     </div>
-    <div class="updates-list" id="updatesList">
-      <div class="no-updates">אין עדכונים</div>
+    <div class="weather-body" id="weatherBody">
+      <div style="text-align:center;color:#ccc;padding:30px;font-size:0.9rem">טוען...</div>
     </div>
   </div>
 
@@ -540,54 +602,88 @@
   loadBusinesses();
   setInterval(loadBusinesses, 60000);
 
-  // עדכוני בניין — כרטיסים
+  // עדכוני בניין — רק בסרגל העליון
   async function loadUpdates() {
-    const data = await fetch('/api/' + BID + '/updates').then(r => r.json());
-    const el = document.getElementById('updatesList');
-    if (!data.length) { el.innerHTML = '<div class="no-updates">אין עדכונים</div>'; return; }
-    el.innerHTML = data.map(u => `
-      <div class="update-card">
-        <span class="update-card-icon">✉</span>
-        <p>${u.text}</p>
-      </div>
-    `).join('');
-    // גלילה אוטומטית אם יש הרבה עדכונים
-    const ticker = createCardTicker('updatesList');
-    ticker.start();
-  }
-  loadUpdates();
-  setInterval(loadUpdates, 5 * 60 * 1000);
-
-  // גלילה כרטיסים
-  function createCardTicker(elId) {
-    let running = false;
-    function start() {
-      const el = document.getElementById(elId);
-      if (!el || el.scrollHeight <= el.clientHeight) return;
-      if (running) return;
-      running = true;
-      let pos = 0;
-      const speed = 0.4;
-      function step() {
-        pos += speed;
-        if (pos >= el.scrollHeight / 2) pos = 0;
-        el.scrollTop = pos;
-        if (running) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    }
-    return { start };
-  }
-
-  // עדכוני בניין בסרגל עליון
-  async function loadUpdatesForTicker() {
     const data = await fetch('/api/' + BID + '/updates').then(r => r.json());
     if (!data.length) return;
     const items = data.map(u => `<span class="update-item">${u.text}</span>`).join('');
     updatesTicker.setContent(items + items);
   }
-  loadUpdatesForTicker();
-  setInterval(loadUpdatesForTicker, 5 * 60 * 1000);
+  loadUpdates();
+  setInterval(loadUpdates, 5 * 60 * 1000);
+
+  // מזג אוויר — Open-Meteo (חינמי, ללא API key)
+  const WMO_DESC = {
+    0:'שמיים בהירים', 1:'בהיר בעיקר', 2:'מעונן חלקית', 3:'מעונן',
+    45:'ערפל', 48:'ערפל',
+    51:'טפטוף קל', 53:'טפטוף', 55:'טפטוף כבד',
+    61:'גשם קל', 63:'גשם', 65:'גשם כבד',
+    71:'שלג קל', 73:'שלג', 75:'שלג כבד',
+    80:'מקלחות גשם', 81:'מקלחות', 82:'מקלחות כבדות',
+    95:'סופת רעמים', 96:'סופת רעמים', 99:'סופת רעמים'
+  };
+  const WMO_ICON = {
+    0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️',
+    45:'🌫️', 48:'🌫️',
+    51:'🌦️', 53:'🌦️', 55:'🌧️',
+    61:'🌧️', 63:'🌧️', 65:'🌧️',
+    71:'🌨️', 73:'❄️', 75:'❄️',
+    80:'🌦️', 81:'🌧️', 82:'⛈️',
+    95:'⛈️', 96:'⛈️', 99:'⛈️'
+  };
+  const DAY_SHORT = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+
+  function wmoIcon(code) { return WMO_ICON[code] || '🌡️'; }
+  function wmoDesc(code) { return WMO_DESC[code] || ''; }
+
+  async function loadWeather() {
+    try {
+      const url = 'https://api.open-meteo.com/v1/forecast' +
+        '?latitude=32.0853&longitude=34.7818' +
+        '&current=temperature_2m,weathercode,windspeed_10m,relative_humidity_2m' +
+        '&daily=weathercode,temperature_2m_max,temperature_2m_min' +
+        '&timezone=Asia%2FJerusalem&forecast_days=4';
+      const data = await fetch(url).then(r => r.json());
+      const cur  = data.current;
+      const day  = data.daily;
+      const temp = Math.round(cur.temperature_2m);
+      const code = cur.weathercode;
+      const wind = Math.round(cur.windspeed_10m);
+      const hum  = cur.relative_humidity_2m;
+
+      // תחזית 3 ימים נוספים (מחר ואילך)
+      const forecastRows = [1,2,3].map(i => {
+        const date  = new Date(day.time[i]);
+        const label = DAY_SHORT[date.getDay()];
+        const max   = Math.round(day.temperature_2m_max[i]);
+        const min   = Math.round(day.temperature_2m_min[i]);
+        const ic    = wmoIcon(day.weathercode[i]);
+        return `<div class="forecast-row">
+          <span class="forecast-day">${label}</span>
+          <span class="forecast-icon">${ic}</span>
+          <span class="forecast-temps"><span>${max}°</span> / ${min}°</span>
+        </div>`;
+      }).join('');
+
+      document.getElementById('weatherBody').innerHTML = `
+        <div class="weather-current">
+          <div class="weather-icon-big">${wmoIcon(code)}</div>
+          <div class="weather-temp-big">${temp}<sup>°C</sup></div>
+          <div class="weather-desc">${wmoDesc(code)}</div>
+          <div class="weather-extra">
+            <span class="weather-extra-item">💧 ${hum}%</span>
+            <span class="weather-extra-item">💨 ${wind} קמ"ש</span>
+          </div>
+        </div>
+        <div class="weather-forecast">${forecastRows}</div>
+      `;
+    } catch(e) {
+      document.getElementById('weatherBody').innerHTML =
+        '<div style="text-align:center;color:#ccc;padding:20px;font-size:0.85rem">לא ניתן לטעון מזג אוויר</div>';
+    }
+  }
+  loadWeather();
+  setInterval(loadWeather, 15 * 60 * 1000);
 
   // פרסומות
   let adIndex = 0, adTimer = null, adsData = [];

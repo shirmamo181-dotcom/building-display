@@ -139,9 +139,13 @@ async function fetchIsraelHayom() {
     });
     const xml = await r.text();
     const result = await xml2js.parseStringPromise(xml);
-    ilHayomCache = result.rss.channel[0].item.slice(0, 12).map(i => ({
-      title: i.title[0], pubDate: i.pubDate ? i.pubDate[0] : ''
-    }));
+    ilHayomCache = result.rss.channel[0].item.slice(0, 12).map(i => {
+      let image = '';
+      if (i.enclosure && i.enclosure[0] && i.enclosure[0].$) image = i.enclosure[0].$.url || '';
+      if (!image && i['media:content'] && i['media:content'][0] && i['media:content'][0].$) image = i['media:content'][0].$.url || '';
+      if (!image && i['media:thumbnail'] && i['media:thumbnail'][0] && i['media:thumbnail'][0].$) image = i['media:thumbnail'][0].$.url || '';
+      return { title: i.title[0], image, pubDate: i.pubDate ? i.pubDate[0] : '' };
+    });
     ilHayomCacheTime = Date.now();
     console.log('ישראל היום עודכן:', ilHayomCache.length, 'פריטים');
   } catch(e) { console.log('שגיאה ישראל היום:', e.message); }

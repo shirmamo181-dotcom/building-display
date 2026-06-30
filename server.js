@@ -132,6 +132,20 @@ app.get('/api/me', (req, res) => {
 
 // --- חדשות ישראל היום ---
 let ilHayomCache = [], ilHayomCacheTime = 0;
+
+async function fetchOgImage(url) {
+  try {
+    const r = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      signal: AbortSignal.timeout(5000)
+    });
+    const html = await r.text();
+    const m = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+           || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    return m ? m[1] : '';
+  } catch(e) { return ''; }
+}
+
 async function fetchIsraelHayom() {
   try {
     const r = await fetch('https://www.israelhayom.co.il/rss.xml', {
@@ -139,28 +153,22 @@ async function fetchIsraelHayom() {
     });
     const xml = await r.text();
     const result = await xml2js.parseStringPromise(xml);
-    ilHayomCache = result.rss.channel[0].item.slice(0, 12).map(i => {
-      let image = '';
-      // נסיון 1: שדות מדיה סטנדרטיים
-      if (i.enclosure && i.enclosure[0] && i.enclosure[0].$) image = i.enclosure[0].$.url || '';
-      if (!image && i['media:content'] && i['media:content'][0] && i['media:content'][0].$) image = i['media:content'][0].$.url || '';
-      if (!image && i['media:thumbnail'] && i['media:thumbnail'][0] && i['media:thumbnail'][0].$) image = i['media:thumbnail'][0].$.url || '';
-      // נסיון 2: חילוץ src מתוך HTML של description
-      if (!image && i.description && i.description[0]) {
-        const m = i.description[0].match(/<img[^>]+src=["']([^"']+)["']/i);
-        if (m) image = m[1];
-      }
-      // נסיון 3: שדה image ישיר
-      if (!image && i.image && i.image[0]) image = typeof i.image[0] === 'string' ? i.image[0] : (i.image[0].url ? i.image[0].url[0] : '');
-      return { title: i.title[0], image, pubDate: i.pubDate ? i.pubDate[0] : '' };
-    });
-    console.log('ישראל היום — דוגמה:', JSON.stringify(ilHayomCache[0]));
+    const items = result.rss.channel[0].item.slice(0, 10).map(i => ({
+      title: i.title[0],
+      link: i.link ? i.link[0] : '',
+      pubDate: i.pubDate ? i.pubDate[0] : '',
+      image: ''
+    }));
+    // חילוץ תמונות og:image במקביל מכל כתבה
+    const images = await Promise.all(items.map(i => i.link ? fetchOgImage(i.link) : Promise.resolve('')));
+    items.forEach((item, idx) => { item.image = images[idx]; });
+    ilHayomCache = items;
     ilHayomCacheTime = Date.now();
-    console.log('ישראל היום עודכן:', ilHayomCache.length, 'פריטים');
+    console.log('ישראל היום עודכן:', ilHayomCache.length, 'פריטים, תמונות:', images.filter(Boolean).length);
   } catch(e) { console.log('שגיאה ישראל היום:', e.message); }
 }
 fetchIsraelHayom();
-setInterval(fetchIsraelHayom, 5 * 60 * 1000);
+setInterval(fetchIsraelHayom, 10 * 60 * 1000);
 
 app.get('/api/israelhayom', async (req, res) => {
   if (Date.now() - ilHayomCacheTime > 5 * 60 * 1000) await fetchIsraelHayom();

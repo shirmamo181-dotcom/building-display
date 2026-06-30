@@ -34,7 +34,6 @@ const upload = multer({ storage });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'building-secret',
   resave: false,
@@ -337,11 +336,13 @@ app.delete('/api/superadmin/buildings/:id/ads/:adId', requireSuper, (req, res) =
   res.json({ ok: true });
 });
 
-// --- דפים ---
+// --- דפים (לפני static כדי שלא יתנגשו עם public/admin/index.html) ---
 app.get('/login',       (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/screen/:bid', (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen.html')));
 app.get('/admin',       (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'super.html')));
 app.get('/admin/:bid',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
 app.get('/screen',      (req, res) => res.redirect('/screen/203991203'));
+
+app.use(express.static('public'));
 
 app.listen(PORT, () => console.log(`שרת רץ על פורט ${PORT}`));

@@ -12,11 +12,13 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ADMIN_PASSWORD_HASH = bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'admin123', 10);
+
+const SUPER_USER      = process.env.SUPER_ADMIN_USER     || 'superadmin';
+const SUPER_PASS_HASH = bcrypt.hashSync(process.env.SUPER_ADMIN_PASSWORD || 'super123', 10);
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
+  api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
@@ -37,191 +39,309 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'building-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    secure: false,
-    httpOnly: true,
-    maxAge: 7 * 24 * 60 * 60 * 1000 // שבוע
-  }
+  cookie: { secure: false, httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 }
 }));
 
 // --- נתונים ---
-const dataPath = (file) => path.join(__dirname, 'data', file);
-const readData = (file) => JSON.parse(fs.readFileSync(dataPath(file), 'utf8'));
-const writeData = (file, data) => fs.writeFileSync(dataPath(file), JSON.stringify(data, null, 2));
+const BUILDINGS_PATH = path.join(__dirname, 'data', 'buildings.json');
+const bDir  = (bid)       => path.join(__dirname, 'data', 'buildings', bid);
+const bFile = (bid, file) => path.join(bDir(bid), file);
 
-// נקה פרסומות ללא URL בהפעלת השרת
-(function cleanStaleAds() {
-  const ads = readData('ads.json');
-  const cleaned = ads.filter(a => a.url && a.url.trim() !== '');
-  if (cleaned.length !== ads.length) {
-    writeData('ads.json', cleaned);
-    console.log(`ניקה ${ads.length - cleaned.length} פרסומות ריקות`);
-  }
+const DEFAULT_DATA = {
+  'businesses.json': [],
+  'ads.json':        [],
+  'updates.json':    [],
+  'settings.json':   { buildingName: 'מרכז עסקים' },
+  'theme.json':      { theme: 'wood' },
+};
+
+function readBuildings() {
+  if (!fs.existsSync(BUILDINGS_PATH)) return [];
+  return JSON.parse(fs.readFileSync(BUILDINGS_PATH, 'utf8'));
+}
+function writeBuildings(data) { fs.writeFileSync(BUILDINGS_PATH, JSON.stringify(data, null, 2)); }
+
+function readBData(bid, file) {
+  const p = bFile(bid, file);
+  if (!fs.existsSync(p)) return DEFAULT_DATA[file] ?? null;
+  return JSON.parse(fs.readFileSync(p, 'utf8'));
+}
+function writeBData(bid, file, data) { fs.writeFileSync(bFile(bid, file), JSON.stringify(data, null, 2)); }
+
+// הפעלה: hash סיסמאות, צור תיקיות חסרות
+(function initBuildings() {
+  if (!fs.existsSync(BUILDINGS_PATH)) { fs.writeFileSync(BUILDINGS_PATH, '[]'); return; }
+  let buildings = readBuildings();
+  let changed = false;
+  buildings.forEach(b => {
+    if (!fs.existsSync(bDir(b.id))) fs.mkdirSync(bDir(b.id), { recursive: true });
+    if (b.password && !b.passwordHash) {
+      b.passwordHash = bcrypt.hashSync(b.password, 10);
+      delete b.password;
+      changed = true;
+    }
+  });
+  if (changed) writeBuildings(buildings);
+  console.log(`נטענו ${buildings.length} בניינים`);
 })();
 
-// --- מבזקי ynet ---
-let newsCache = [];
-let newsCacheTime = 0;
-
-async function fetchNews() {
-  try {
-    const res = await fetch('https://www.ynet.co.il/Integration/StoryRss2.xml', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
-    });
-    const xml = await res.text();
-    const result = await xml2js.parseStringPromise(xml);
-    newsCache = result.rss.channel[0].item.slice(0, 15).map(i => ({
-      title: i.title[0],
-      pubDate: i.pubDate ? i.pubDate[0] : ''
-    }));
-    newsCacheTime = Date.now();
-    console.log('ynet עודכן:', new Date().toLocaleTimeString('he-IL'), '—', newsCache.length, 'פריטים');
-  } catch (e) {
-    console.log('שגיאה ynet:', e.message);
-  }
-}
-fetchNews();
-setInterval(fetchNews, 2 * 60 * 1000);
-
-// --- API ציבורי ---
-app.get('/api/businesses', (req, res) => res.json(readData('businesses.json')));
-app.get('/api/updates', (req, res) => res.json(readData('updates.json')));
-app.get('/api/ads', (req, res) => res.json(readData('ads.json').filter(a => a.active)));
-app.get('/api/news', async (req, res) => {
-  // אם הקאש ישן מ-2 דקות — שלוף מחדש לפני מענה
-  if (Date.now() - newsCacheTime > 2 * 60 * 1000) await fetchNews();
-  res.json(newsCache);
-});
-
-// --- Auth ---
-function requireAuth(req, res, next) {
-  if (req.session.admin) return next();
-  res.status(401).json({ error: 'לא מחובר' });
+// --- Auth middleware ---
+function requireSuper(req, res, next) {
+  if (req.session.superAdmin) return next();
+  res.status(401).json({ error: 'נדרשת כניסה כמנהל-על' });
 }
 
+function requireBuilding(req, res, next) {
+  const bid = req.params.bid;
+  if (req.session.superAdmin || req.session.buildingId === bid) return next();
+  res.status(401).json({ error: 'אין הרשאה' });
+}
+
+function requireAdsAuth(req, res, next) {
+  const bid = req.params.bid;
+  if (req.session.superAdmin) return next();
+  if (req.session.buildingId !== bid) return res.status(401).json({ error: 'אין הרשאה' });
+  const b = readBuildings().find(b => b.id === bid);
+  if (b && b.canManageAds) return next();
+  res.status(403).json({ error: 'ניהול פרסומות אינו מופעל לבניין זה' });
+}
+
+// --- Login / Auth ---
 app.post('/api/login', (req, res) => {
-  if (bcrypt.compareSync(req.body.password, ADMIN_PASSWORD_HASH)) {
-    req.session.admin = true;
-    res.json({ ok: true });
-  } else {
-    res.status(401).json({ error: 'סיסמה שגויה' });
+  const { username, password } = req.body;
+  if (username === SUPER_USER && bcrypt.compareSync(password, SUPER_PASS_HASH)) {
+    req.session.superAdmin = true;
+    req.session.buildingId = null;
+    return res.json({ ok: true, role: 'superadmin' });
   }
+  const b = readBuildings().find(b => b.id === username);
+  if (b && bcrypt.compareSync(password, b.passwordHash)) {
+    req.session.buildingId = b.id;
+    req.session.superAdmin = false;
+    return res.json({ ok: true, role: 'building', buildingId: b.id });
+  }
+  res.status(401).json({ error: 'שם משתמש או סיסמה שגויים' });
 });
 
 app.post('/api/logout', (req, res) => { req.session.destroy(); res.json({ ok: true }); });
 
+app.get('/api/me', (req, res) => {
+  if (req.session.superAdmin) return res.json({ role: 'superadmin' });
+  if (req.session.buildingId) return res.json({ role: 'building', buildingId: req.session.buildingId });
+  res.json({ role: null });
+});
+
+// --- חדשות ynet ---
+let newsCache = [], newsCacheTime = 0;
+async function fetchNews() {
+  try {
+    const r = await fetch('https://www.ynet.co.il/Integration/StoryRss2.xml', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+    });
+    const xml = await r.text();
+    const result = await xml2js.parseStringPromise(xml);
+    newsCache = result.rss.channel[0].item.slice(0, 15).map(i => ({
+      title: i.title[0], pubDate: i.pubDate ? i.pubDate[0] : ''
+    }));
+    newsCacheTime = Date.now();
+    console.log('ynet עודכן:', newsCache.length, 'פריטים');
+  } catch (e) { console.log('שגיאה ynet:', e.message); }
+}
+fetchNews();
+setInterval(fetchNews, 2 * 60 * 1000);
+
+app.get('/api/news', async (req, res) => {
+  if (Date.now() - newsCacheTime > 2 * 60 * 1000) await fetchNews();
+  res.json(newsCache);
+});
+
+// --- ממשקי בניין ציבוריים ---
+app.get('/api/:bid/businesses', (req, res) => res.json(readBData(req.params.bid, 'businesses.json') || []));
+app.get('/api/:bid/updates',    (req, res) => res.json(readBData(req.params.bid, 'updates.json')    || []));
+app.get('/api/:bid/settings',   (req, res) => res.json(readBData(req.params.bid, 'settings.json')   || {}));
+app.get('/api/:bid/theme',      (req, res) => res.json(readBData(req.params.bid, 'theme.json')      || { theme: 'wood' }));
+app.get('/api/:bid/ads',        (req, res) => res.json((readBData(req.params.bid, 'ads.json') || []).filter(a => a.active)));
+
 // --- עסקים ---
-app.post('/api/businesses', requireAuth, (req, res) => {
-  const list = readData('businesses.json');
-  const item = { id: Date.now(), name: req.body.name, office: req.body.office };
+app.post('/api/:bid/businesses', requireBuilding, (req, res) => {
+  const list = readBData(req.params.bid, 'businesses.json') || [];
+  const item = { id: Date.now(), name: req.body.name, office: req.body.office, floor: req.body.floor || '', description: req.body.description || '' };
   list.push(item);
-  writeData('businesses.json', list);
+  writeBData(req.params.bid, 'businesses.json', list);
   res.json(item);
 });
-
-app.put('/api/businesses/:id', requireAuth, (req, res) => {
-  let list = readData('businesses.json');
+app.put('/api/:bid/businesses/:id', requireBuilding, (req, res) => {
+  let list = readBData(req.params.bid, 'businesses.json') || [];
   list = list.map(b => b.id == req.params.id ? { ...b, ...req.body } : b);
-  writeData('businesses.json', list);
+  writeBData(req.params.bid, 'businesses.json', list);
   res.json({ ok: true });
 });
-
-app.delete('/api/businesses/:id', requireAuth, (req, res) => {
-  let list = readData('businesses.json').filter(b => b.id != req.params.id);
-  writeData('businesses.json', list);
+app.delete('/api/:bid/businesses/:id', requireBuilding, (req, res) => {
+  const list = (readBData(req.params.bid, 'businesses.json') || []).filter(b => b.id != req.params.id);
+  writeBData(req.params.bid, 'businesses.json', list);
   res.json({ ok: true });
 });
 
 // --- עדכוני בניין ---
-app.post('/api/updates', requireAuth, (req, res) => {
-  const list = readData('updates.json');
+app.post('/api/:bid/updates', requireBuilding, (req, res) => {
+  const list = readBData(req.params.bid, 'updates.json') || [];
   const item = { id: Date.now(), text: req.body.text, image: req.body.image || '' };
   list.push(item);
-  writeData('updates.json', list);
+  writeBData(req.params.bid, 'updates.json', list);
   res.json(item);
 });
-
-app.put('/api/updates/:id', requireAuth, (req, res) => {
-  let list = readData('updates.json');
+app.put('/api/:bid/updates/:id', requireBuilding, (req, res) => {
+  let list = readBData(req.params.bid, 'updates.json') || [];
   list = list.map(u => u.id == req.params.id ? { ...u, ...req.body } : u);
-  writeData('updates.json', list);
+  writeBData(req.params.bid, 'updates.json', list);
   res.json({ ok: true });
 });
-
-app.delete('/api/updates/:id', requireAuth, (req, res) => {
-  let list = readData('updates.json').filter(u => u.id != req.params.id);
-  writeData('updates.json', list);
+app.delete('/api/:bid/updates/:id', requireBuilding, (req, res) => {
+  const list = (readBData(req.params.bid, 'updates.json') || []).filter(u => u.id != req.params.id);
+  writeBData(req.params.bid, 'updates.json', list);
   res.json({ ok: true });
 });
-
-app.post('/api/updates/reorder', requireAuth, (req, res) => {
+app.post('/api/:bid/updates/reorder', requireBuilding, (req, res) => {
   const { id, direction } = req.body;
-  let list = readData('updates.json');
+  let list = readBData(req.params.bid, 'updates.json') || [];
   const idx = list.findIndex(u => u.id == id);
   if (idx === -1) return res.json({ ok: false });
-  const newIdx = direction === 'up' ? idx - 1 : idx + 1;
-  if (newIdx < 0 || newIdx >= list.length) return res.json({ ok: false });
-  [list[idx], list[newIdx]] = [list[newIdx], list[idx]];
-  writeData('updates.json', list);
+  const ni = direction === 'up' ? idx - 1 : idx + 1;
+  if (ni < 0 || ni >= list.length) return res.json({ ok: false });
+  [list[idx], list[ni]] = [list[ni], list[idx]];
+  writeBData(req.params.bid, 'updates.json', list);
   res.json({ ok: true });
 });
 
 // --- פרסומות ---
-app.get('/api/ads/all', requireAuth, (req, res) => res.json(readData('ads.json')));
+app.get('/api/:bid/ads/all', requireBuilding, (req, res) => res.json(readBData(req.params.bid, 'ads.json') || []));
 
-app.post('/api/ads', requireAuth, upload.single('file'), (req, res) => {
-  const list = readData('ads.json');
-  const fileUrl = req.file ? (req.file.secure_url || req.file.path || '') : (req.body.url || '');
-  console.log('העלאת פרסומת:', req.body.title, '| URL:', fileUrl || 'חסר!');
-  const item = {
-    id: Date.now(),
-    title: req.body.title,
-    type: req.body.type,
-    url: fileUrl,
-    duration: parseInt(req.body.duration) || 6,
-    active: req.body.active === 'true'
-  };
+app.post('/api/:bid/ads', requireAdsAuth, upload.single('file'), (req, res) => {
+  const list = readBData(req.params.bid, 'ads.json') || [];
+  const url  = req.file ? (req.file.secure_url || req.file.path || '') : (req.body.url || '');
+  const item = { id: Date.now(), title: req.body.title, type: req.body.type, url, duration: parseInt(req.body.duration) || 6, active: req.body.active === 'true' };
   list.push(item);
-  writeData('ads.json', list);
+  writeBData(req.params.bid, 'ads.json', list);
   res.json(item);
 });
-
-app.put('/api/ads/:id', requireAuth, (req, res) => {
-  let list = readData('ads.json');
+app.put('/api/:bid/ads/:id', requireAdsAuth, (req, res) => {
+  let list = readBData(req.params.bid, 'ads.json') || [];
   list = list.map(a => a.id == req.params.id ? { ...a, ...req.body, active: req.body.active === 'true' } : a);
-  writeData('ads.json', list);
+  writeBData(req.params.bid, 'ads.json', list);
+  res.json({ ok: true });
+});
+app.delete('/api/:bid/ads/:id', requireAdsAuth, (req, res) => {
+  const list = (readBData(req.params.bid, 'ads.json') || []).filter(a => a.id != req.params.id);
+  writeBData(req.params.bid, 'ads.json', list);
   res.json({ ok: true });
 });
 
-app.delete('/api/ads/:id', requireAuth, (req, res) => {
-  let list = readData('ads.json').filter(a => a.id != req.params.id);
-  writeData('ads.json', list);
+// --- הגדרות וערכת נושא ---
+app.post('/api/:bid/settings', requireBuilding, (req, res) => {
+  const cur = readBData(req.params.bid, 'settings.json') || {};
+  writeBData(req.params.bid, 'settings.json', { ...cur, ...req.body });
+  res.json({ ok: true });
+});
+app.post('/api/:bid/theme', requireBuilding, (req, res) => {
+  writeBData(req.params.bid, 'theme.json', { theme: req.body.theme });
   res.json({ ok: true });
 });
 
-// --- הגדרות בניין ---
-app.get('/api/settings', (req, res) => {
-  try { res.json(readData('settings.json')); } catch { res.json({ buildingName: 'מרכז עסקים' }); }
-});
-app.post('/api/settings', requireAuth, (req, res) => {
-  const current = (() => { try { return readData('settings.json'); } catch { return {}; } })();
-  writeData('settings.json', { ...current, ...req.body });
+// --- שינוי סיסמה ---
+app.post('/api/:bid/change-password', requireBuilding, (req, res) => {
+  if (req.session.superAdmin) return res.status(403).json({ error: 'מנהל-על לא יכול לשנות סיסמת בניין מכאן' });
+  const { oldPassword, newPassword } = req.body;
+  let buildings = readBuildings();
+  const idx = buildings.findIndex(b => b.id === req.params.bid);
+  if (idx === -1) return res.status(404).json({ error: 'בניין לא נמצא' });
+  if (!bcrypt.compareSync(oldPassword, buildings[idx].passwordHash))
+    return res.status(401).json({ error: 'סיסמה ישנה שגויה' });
+  buildings[idx].passwordHash = bcrypt.hashSync(newPassword, 10);
+  writeBuildings(buildings);
   res.json({ ok: true });
 });
 
-// --- ערכת נושא ---
-app.get('/api/theme', (req, res) => {
-  try { res.json(readData('theme.json')); } catch { res.json({ theme: 'wood' }); }
+// --- פרטי בניין ---
+app.get('/api/:bid/building-info', requireBuilding, (req, res) => {
+  const b = readBuildings().find(b => b.id === req.params.bid);
+  if (!b) return res.status(404).json({ error: 'לא נמצא' });
+  res.json({ id: b.id, name: b.name, email: b.email, canManageAds: b.canManageAds, createdAt: b.createdAt });
 });
-app.post('/api/theme', requireAuth, (req, res) => {
-  writeData('theme.json', { theme: req.body.theme });
+
+// --- מנהל-על: ניהול בניינים ---
+app.get('/api/superadmin/buildings', requireSuper, (req, res) => {
+  res.json(readBuildings().map(({ passwordHash, ...safe }) => safe));
+});
+
+app.post('/api/superadmin/buildings', requireSuper, (req, res) => {
+  const buildings = readBuildings();
+  if (buildings.find(b => b.id === req.body.id))
+    return res.status(400).json({ error: 'בניין עם ת"ז זו כבר קיים' });
+  const building = {
+    id: req.body.id,
+    passwordHash: bcrypt.hashSync(req.body.password, 10),
+    name: req.body.name,
+    email: req.body.email || '',
+    canManageAds: false,
+    createdAt: new Date().toISOString().split('T')[0]
+  };
+  fs.mkdirSync(bDir(building.id), { recursive: true });
+  writeBData(building.id, 'businesses.json', []);
+  writeBData(building.id, 'ads.json', []);
+  writeBData(building.id, 'updates.json', []);
+  writeBData(building.id, 'settings.json', { buildingName: building.name });
+  writeBData(building.id, 'theme.json', { theme: 'wood' });
+  buildings.push(building);
+  writeBuildings(buildings);
+  const { passwordHash, ...safe } = building;
+  res.json(safe);
+});
+
+app.put('/api/superadmin/buildings/:id', requireSuper, (req, res) => {
+  let buildings = readBuildings();
+  const idx = buildings.findIndex(b => b.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'לא נמצא' });
+  const update = { ...req.body };
+  if (update.password) { update.passwordHash = bcrypt.hashSync(update.password, 10); delete update.password; }
+  buildings[idx] = { ...buildings[idx], ...update };
+  writeBuildings(buildings);
+  res.json({ ok: true });
+});
+
+app.delete('/api/superadmin/buildings/:id', requireSuper, (req, res) => {
+  writeBuildings(readBuildings().filter(b => b.id !== req.params.id));
+  res.json({ ok: true });
+});
+
+// מנהל-על: ניהול פרסומות לבניין
+app.get('/api/superadmin/buildings/:id/ads', requireSuper, (req, res) => {
+  res.json(readBData(req.params.id, 'ads.json') || []);
+});
+app.post('/api/superadmin/buildings/:id/ads', requireSuper, upload.single('file'), (req, res) => {
+  const list = readBData(req.params.id, 'ads.json') || [];
+  const url  = req.file ? (req.file.secure_url || req.file.path || '') : (req.body.url || '');
+  const item = { id: Date.now(), title: req.body.title, type: req.body.type, url, duration: parseInt(req.body.duration) || 6, active: req.body.active === 'true' };
+  list.push(item);
+  writeBData(req.params.id, 'ads.json', list);
+  res.json(item);
+});
+app.put('/api/superadmin/buildings/:id/ads/:adId', requireSuper, (req, res) => {
+  let list = readBData(req.params.id, 'ads.json') || [];
+  list = list.map(a => a.id == req.params.adId ? { ...a, ...req.body, active: req.body.active === 'true' } : a);
+  writeBData(req.params.id, 'ads.json', list);
+  res.json({ ok: true });
+});
+app.delete('/api/superadmin/buildings/:id/ads/:adId', requireSuper, (req, res) => {
+  const list = (readBData(req.params.id, 'ads.json') || []).filter(a => a.id != req.params.adId);
+  writeBData(req.params.id, 'ads.json', list);
   res.json({ ok: true });
 });
 
 // --- דפים ---
-app.get('/screen', (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen.html')));
-app.get('/screen1', (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen1.html')));
-app.get('/screen2', (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen2.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
+app.get('/login',       (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/screen/:bid', (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen.html')));
+app.get('/admin',       (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'super.html')));
+app.get('/admin/:bid',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
+app.get('/screen',      (req, res) => res.redirect('/screen/203991203'));
 
 app.listen(PORT, () => console.log(`שרת רץ על פורט ${PORT}`));

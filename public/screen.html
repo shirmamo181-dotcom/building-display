@@ -491,9 +491,12 @@
 </div>
 
 <script>
+  // buildingId מה-URL: /screen/203991203
+  const BID = location.pathname.split('/')[2] || '203991203';
+
   // שם בניין
   async function loadBuildingName() {
-    const data = await fetch('/api/settings').then(r => r.json()).catch(() => ({}));
+    const data = await fetch('/api/' + BID + '/settings').then(r => r.json()).catch(() => ({}));
     if (data.buildingName) document.getElementById('buildingName').textContent = '◈ ' + data.buildingName;
   }
   loadBuildingName();
@@ -501,7 +504,7 @@
 
   // ערכת נושא
   async function loadTheme() {
-    const data = await fetch('/api/theme').then(r => r.json()).catch(() => ({ theme: 'wood' }));
+    const data = await fetch('/api/' + BID + '/theme').then(r => r.json()).catch(() => ({ theme: 'wood' }));
     document.body.className = 'theme-' + (data.theme || 'wood');
   }
   loadTheme();
@@ -524,7 +527,7 @@
 
   // עסקים
   async function loadBusinesses() {
-    const data = await fetch('/api/businesses').then(r => r.json());
+    const data = await fetch('/api/' + BID + '/businesses').then(r => r.json());
     const el = document.getElementById('bizScroll');
     if (!data.length) { el.innerHTML = '<div style="padding:20px;color:#aaa;text-align:center">אין עסקים עדיין</div>'; return; }
     const items = data.map((b, i) => `
@@ -543,7 +546,7 @@
 
   // עדכוני בניין
   async function loadUpdates() {
-    const data = await fetch('/api/updates').then(r => r.json());
+    const data = await fetch('/api/' + BID + '/updates').then(r => r.json());
     if (!data.length) return;
     const items = data.map(u => `<span class="update-item">${u.text}</span>`).join('');
     updatesTicker.setContent(items + items);
@@ -554,7 +557,7 @@
   // פרסומות
   let adIndex = 0, adTimer = null, adsData = [];
   async function loadAds() {
-    adsData = await fetch('/api/ads').then(r => r.json());
+    adsData = await fetch('/api/' + BID + '/ads').then(r => r.json());
     renderAds();
   }
   function renderAds() {

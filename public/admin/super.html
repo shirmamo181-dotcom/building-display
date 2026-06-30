@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>דשבורד-על — Building Display</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #080814; color: #e0e0e0; font-family: 'Heebo', Arial, sans-serif; min-height: 100vh; }
+
+  .topbar {
+    background: linear-gradient(135deg, #0d0d2e, #1a1a4a);
+    padding: 18px 28px; display: flex; align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid #6a4aff;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .topbar h1 { font-size: 1.3rem; color: #fff; }
+  .super-badge {
+    background: linear-gradient(135deg, #6a4aff, #4a4aff);
+    color: #fff; font-size: 0.72rem; font-weight: 700;
+    padding: 4px 10px; border-radius: 20px; letter-spacing: 1px;
+  }
+  .btn-out {
+    background: transparent; color: #aaa; border: 1px solid #444;
+    border-radius: 6px; padding: 8px 16px; cursor: pointer; font-size: 0.9rem; font-family: inherit;
+  }
+  .btn-out:hover { border-color: #6a4aff; color: #fff; }
+
+  .tabs { display: flex; background: #0e0e28; border-bottom: 2px solid #1e1e4a; }
+  .tab {
+    padding: 15px 24px; cursor: pointer; font-size: 0.95rem; color: #777;
+    border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap;
+  }
+  .tab.active { color: #fff; border-bottom-color: #6a4aff; background: #1a1a3e; }
+
+  .content { padding: 28px; max-width: 1100px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* סטטיסטיקות */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .stat-card {
+    background: #1a1a3e; border: 1px solid #2a2a5a; border-radius: 14px;
+    padding: 20px; text-align: center;
+  }
+  .stat-num { font-size: 2.2rem; font-weight: 700; color: #6a4aff; }
+  .stat-label { font-size: 0.82rem; color: #888; margin-top: 4px; }
+
+  /* כרטיסי בניין */
+  .building-card {
+    background: #1a1a3e; border: 1px solid #2a2a5a; border-radius: 14px;
+    padding: 20px 24px; margin-bottom: 16px; transition: border-color 0.2s;
+  }
+  .building-card:hover { border-color: #4a4aff; }
+  .building-header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+  .building-name { font-size: 1.1rem; font-weight: 700; color: #fff; flex: 1; }
+  .building-id { font-size: 0.82rem; color: #666; }
+  .building-date { font-size: 0.78rem; color: #555; }
+  .ads-badge {
+    font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+    border: 1px solid; white-space: nowrap;
+  }
+  .ads-badge.on  { color: #2ecc71; border-color: #2ecc71; background: rgba(46,204,113,0.08); }
+  .ads-badge.off { color: #888;    border-color: #444;    background: rgba(255,255,255,0.03); }
+
+  .building-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .btn-action {
+    border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer;
+    font-size: 0.85rem; font-family: inherit; transition: opacity 0.2s;
+  }
+  .btn-action:hover { opacity: 0.8; }
+  .btn-enter  { background: #4a4aff; color: #fff; }
+  .btn-screen { background: #1e3a5a; color: #7eb8d4; border: 1px solid #2a5a8a; }
+  .btn-ads    { background: #1e3a1e; color: #5ecc71; border: 1px solid #2a6a2a; }
+  .btn-toggle { background: #2a2a50; color: #a0a0ff; border: 1px solid #3a3a7a; }
+  .btn-edit-b { background: #2a2a2a; color: #ccc; border: 1px solid #444; }
+  .btn-del-b  { background: transparent; color: #ff6b6b; border: 1px solid #ff6b6b; }
+  .btn-del-b:hover { background: #ff6b6b; color: #fff; }
+
+  /* טופס הוספת בניין */
+  .add-form {
+    background: #12122a; border: 1px solid #2a2a5a; border-radius: 14px;
+    padding: 24px; margin-bottom: 28px;
+  }
+  .add-form h3 { font-size: 1rem; color: #aaa; margin-bottom: 18px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .form-grid input {
+    padding: 12px 14px; border-radius: 8px; border: 1px solid #333;
+    background: #0f0f1e; color: #fff; font-size: 0.95rem; text-align: right; font-family: inherit;
+  }
+  .form-grid input:focus { outline: none; border-color: #6a4aff; }
+  .btn-add { background: #6a4aff; color: #fff; border: none; border-radius: 8px; padding: 12px 28px; font-size: 0.95rem; cursor: pointer; font-family: inherit; }
+  .btn-add:hover { background: #5535cc; }
+
+  /* מודל פרסומות */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #1a1a3e; border: 1px solid #2a2a5a; border-radius: 16px;
+    padding: 28px; width: 90%; max-width: 640px; max-height: 85vh; overflow-y: auto;
+  }
+  .modal h2 { font-size: 1.1rem; margin-bottom: 20px; color: #fff; }
+  .modal-close { float: left; background: transparent; border: none; color: #888; font-size: 1.4rem; cursor: pointer; line-height: 1; }
+
+  .ad-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid #2a2a5a; }
+  .ad-thumb { width: 70px; height: 50px; object-fit: cover; border-radius: 6px; background: #333; }
+  .ad-info { flex: 1; }
+  .ad-info strong { display: block; font-size: 0.95rem; }
+  .ad-info small { color: #888; font-size: 0.8rem; }
+
+  .file-input-label {
+    display: block; background: #0f0f1e; border: 2px dashed #333;
+    border-radius: 8px; padding: 16px; text-align: center; cursor: pointer;
+    color: #888; margin-bottom: 10px;
+  }
+  .file-input-label input { display: none; }
+  .file-input-label:hover { border-color: #6a4aff; color: #a0a0ff; }
+
+  /* עריכת בניין */
+  .edit-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center;
+  }
+  .edit-overlay.open { display: flex; }
+  .edit-modal {
+    background: #1a1a3e; border: 1px solid #2a2a5a; border-radius: 16px;
+    padding: 28px; width: 90%; max-width: 480px;
+  }
+  .edit-modal h2 { font-size: 1.1rem; margin-bottom: 20px; }
+  .edit-modal input {
+    width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid #333;
+    background: #0f0f1e; color: #fff; font-size: 0.95rem; text-align: right;
+    font-family: inherit; margin-bottom: 12px;
+  }
+  .edit-modal input:focus { outline: none; border-color: #6a4aff; }
+
+  .empty-state { text-align: center; color: #555; padding: 40px; font-size: 1rem; }
+  .section-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 24px; color: #fff; }
+  .error-msg { color: #ff6b6b; font-size: 0.88rem; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>◈ Building Display</h1>
+    <span class="super-badge">SUPER ADMIN</span>
+  </div>
+  <button class="btn-out" onclick="logout()">יציאה</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('buildings',this)">🏢 בניינים</div>
+  <div class="tab" onclick="showTab('add',this)">➕ הוספת בניין</div>
+</div>
+
+<div class="content">
+
+  <!-- בניינים -->
+  <div class="section active" id="section-buildings">
+    <div class="stats-row" id="statsRow"></div>
+    <div class="section-title">כל הבניינים</div>
+    <div id="buildingsList"></div>
+  </div>
+
+  <!-- הוספת בניין -->
+  <div class="section" id="section-add">
+    <div class="section-title">הוספת בניין חדש</div>
+    <div class="add-form">
+      <h3>פרטי הבניין והלקוח</h3>
+      <div class="form-grid">
+        <input type="text" id="newId" placeholder="ת.ז. בעל הבניין (שם משתמש)">
+        <input type="password" id="newPw" placeholder="סיסמה ראשונית">
+        <input type="text" id="newName" placeholder="שם הבניין">
+        <input type="email" id="newEmail" placeholder="מייל בעל הבניין">
+      </div>
+      <button class="btn-add" onclick="addBuilding()">+ הוסף בניין</button>
+      <div class="error-msg" id="addError"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- מודל פרסומות -->
+<div class="modal-overlay" id="adsModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAdsModal()">✕</button>
+    <h2 id="adsModalTitle">פרסומות</h2>
+    <div id="adsModalAddForm" style="margin-bottom:20px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <input type="text" id="mAdTitle" placeholder="שם המפרסם" style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+        <input type="number" id="mAdDur" value="6" placeholder="שניות" style="width:90px;padding:10px 12px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+      </div>
+      <label class="file-input-label">
+        📁 בחר תמונה או סרטון
+        <input type="file" id="mAdFile" accept="image/*,video/mp4" onchange="document.getElementById('mFileSelected').textContent=this.files[0]?.name||''">
+      </label>
+      <div id="mFileSelected" style="color:#7eb8d4;font-size:0.85rem;margin-bottom:10px"></div>
+      <button class="btn-add" onclick="uploadModalAd()">+ העלה פרסומת</button>
+    </div>
+    <div id="adsModalList"></div>
+  </div>
+</div>
+
+<!-- מודל עריכת בניין -->
+<div class="edit-overlay" id="editModal">
+  <div class="edit-modal">
+    <h2>עריכת בניין</h2>
+    <input type="hidden" id="editBid">
+    <input type="text"     id="editName"  placeholder="שם הבניין">
+    <input type="email"    id="editEmail" placeholder="מייל בעל הבניין">
+    <input type="password" id="editPw"    placeholder="סיסמה חדשה (השאר ריק לאי-שינוי)">
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn-add" onclick="saveEdit()">שמור</button>
+      <button onclick="closeEditModal()" style="background:transparent;border:1px solid #444;color:#aaa;border-radius:8px;padding:10px 18px;cursor:pointer;font-family:inherit">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentAdsBid = null;
+
+async function init() {
+  const me = await fetch('/api/me').then(r => r.json());
+  if (me.role !== 'superadmin') { location.href = '/login'; return; }
+  loadBuildings();
+}
+
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  location.href = '/login';
+}
+
+function showTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('section-'+name).classList.add('active');
+  if (name === 'buildings') loadBuildings();
+}
+
+async function loadBuildings() {
+  const data = await fetch('/api/superadmin/buildings').then(r => r.json()).catch(() => []);
+
+  // סטטיסטיקות
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${data.length}</div><div class="stat-label">בניינים פעילים</div></div>
+    <div class="stat-card"><div class="stat-num">${data.filter(b=>b.canManageAds).length}</div><div class="stat-label">ריטיינר (ניהול פרסומות)</div></div>
+    <div class="stat-card"><div class="stat-num">${data.filter(b=>!b.canManageAds).length}</div><div class="stat-label">חינמי (פרסומות דרכנו)</div></div>
+  `;
+
+  const el = document.getElementById('buildingsList');
+  if (!data.length) { el.innerHTML = '<div class="empty-state">אין בניינים עדיין — הוסף את הראשון</div>'; return; }
+  el.innerHTML = data.map(b => `
+    <div class="building-card">
+      <div class="building-header">
+        <div>
+          <div class="building-name">${b.name}</div>
+          <div class="building-id">ת"ז: ${b.id} | נוסף: ${b.createdAt || '—'} ${b.email ? '| ' + b.email : ''}</div>
+        </div>
+        <span class="ads-badge ${b.canManageAds ? 'on' : 'off'}">
+          ${b.canManageAds ? '✓ ריטיינר' : '○ חינמי'}
+        </span>
+      </div>
+      <div class="building-actions">
+        <button class="btn-action btn-enter"  onclick="location.href='/admin/${b.id}'">◈ כניסה לדשבורד</button>
+        <button class="btn-action btn-screen" onclick="window.open('/screen/${b.id}','_blank')">📺 מסך תצוגה</button>
+        <button class="btn-action btn-ads"    onclick="openAdsModal('${b.id}','${b.name}')">📢 ניהול פרסומות</button>
+        <button class="btn-action btn-toggle" onclick="toggleAds('${b.id}',${!b.canManageAds})">
+          ${b.canManageAds ? '⬇ הסר ריטיינר' : '⬆ הפעל ריטיינר'}
+        </button>
+        <button class="btn-action btn-edit-b" onclick="openEditModal('${b.id}','${b.name}','${b.email||''}')">✏️ עריכה</button>
+        <button class="btn-action btn-del-b"  onclick="deleteBuilding('${b.id}','${b.name}')">🗑 מחק</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function addBuilding() {
+  const id    = document.getElementById('newId').value.trim();
+  const pw    = document.getElementById('newPw').value;
+  const name  = document.getElementById('newName').value.trim();
+  const email = document.getElementById('newEmail').value.trim();
+  const err   = document.getElementById('addError');
+  err.textContent = '';
+  if (!id || !pw || !name) { err.textContent = 'נא למלא ת"ז, סיסמה ושם בניין'; return; }
+  const res = await fetch('/api/superadmin/buildings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ id, password: pw, name, email })
+  });
+  const data = await res.json();
+  if (!res.ok) { err.textContent = data.error || 'שגיאה'; return; }
+  ['newId','newPw','newName','newEmail'].forEach(f => document.getElementById(f).value = '');
+  showTab('buildings', document.querySelector('.tab'));
+}
+
+async function toggleAds(bid, val) {
+  await fetch('/api/superadmin/buildings/' + bid, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ canManageAds: val })
+  });
+  loadBuildings();
+}
+
+async function deleteBuilding(bid, name) {
+  if (!confirm(`למחוק את הבניין "${name}"?\nפעולה זו אינה ניתנת לביטול.`)) return;
+  await fetch('/api/superadmin/buildings/' + bid, { method: 'DELETE' });
+  loadBuildings();
+}
+
+// --- עריכת בניין ---
+function openEditModal(bid, name, email) {
+  document.getElementById('editBid').value   = bid;
+  document.getElementById('editName').value  = name;
+  document.getElementById('editEmail').value = email;
+  document.getElementById('editPw').value    = '';
+  document.getElementById('editModal').classList.add('open');
+}
+function closeEditModal() { document.getElementById('editModal').classList.remove('open'); }
+
+async function saveEdit() {
+  const bid   = document.getElementById('editBid').value;
+  const name  = document.getElementById('editName').value.trim();
+  const email = document.getElementById('editEmail').value.trim();
+  const pw    = document.getElementById('editPw').value;
+  const body  = { name, email };
+  if (pw) body.password = pw;
+  await fetch('/api/superadmin/buildings/' + bid, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  closeEditModal();
+  loadBuildings();
+}
+
+// --- מודל פרסומות ---
+async function openAdsModal(bid, name) {
+  currentAdsBid = bid;
+  document.getElementById('adsModalTitle').textContent = 'פרסומות — ' + name;
+  document.getElementById('adsModal').classList.add('open');
+  loadModalAds();
+}
+function closeAdsModal() {
+  document.getElementById('adsModal').classList.remove('open');
+  currentAdsBid = null;
+}
+
+async function loadModalAds() {
+  const data = await fetch('/api/superadmin/buildings/' + currentAdsBid + '/ads').then(r => r.json()).catch(() => []);
+  const el = document.getElementById('adsModalList');
+  if (!data.length) { el.innerHTML = '<div class="empty-state" style="padding:20px">אין פרסומות עדיין</div>'; return; }
+  el.innerHTML = data.map(a => `
+    <div class="ad-row">
+      ${a.type === 'video'
+        ? `<video class="ad-thumb" src="${a.url}" muted></video>`
+        : a.url ? `<img class="ad-thumb" src="${a.url}" alt="">` : `<div class="ad-thumb"></div>`}
+      <div class="ad-info">
+        <strong>${a.title}</strong>
+        <small>${a.duration}שנ' | ${a.active ? '✓ פעיל' : '⏸ מושהה'}</small>
+      </div>
+      <button class="btn-action btn-toggle" style="padding:5px 12px;font-size:0.8rem"
+        onclick="toggleModalAd(${a.id},${!a.active})">${a.active ? 'השהה' : 'הפעל'}</button>
+      <button class="btn-del-b" style="padding:5px 12px;font-size:0.8rem;border-radius:6px;cursor:pointer;font-family:inherit"
+        onclick="deleteModalAd(${a.id})">מחק</button>
+    </div>
+  `).join('');
+}
+
+async function uploadModalAd() {
+  const title = document.getElementById('mAdTitle').value.trim();
+  const file  = document.getElementById('mAdFile').files[0];
+  const dur   = document.getElementById('mAdDur').value || 6;
+  if (!title) return alert('נא להכניס שם מפרסם');
+  if (!file)  return alert('נא לבחור קובץ');
+  const form = new FormData();
+  form.append('title', title); form.append('duration', dur); form.append('active', 'true');
+  form.append('type', file.type.startsWith('video') ? 'video' : 'image');
+  form.append('file', file);
+  const btn = document.querySelector('[onclick="uploadModalAd()"]');
+  btn.textContent = '⏳ מעלה...'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/superadmin/buildings/' + currentAdsBid + '/ads', { method: 'POST', body: form });
+    const r = await res.json();
+    if (!r.url) throw new Error('לא התקבל קישור');
+    document.getElementById('mAdTitle').value = '';
+    document.getElementById('mAdFile').value  = '';
+    document.getElementById('mFileSelected').textContent = '';
+    loadModalAds();
+  } catch(e) { alert('שגיאה: ' + e.message); }
+  btn.textContent = '+ העלה פרסומת'; btn.disabled = false;
+}
+
+async function toggleModalAd(adId, active) {
+  await fetch('/api/superadmin/buildings/' + currentAdsBid + '/ads/' + adId, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ active: String(active) })
+  });
+  loadModalAds();
+}
+
+async function deleteModalAd(adId) {
+  if (!confirm('למחוק פרסומת זו?')) return;
+  await fetch('/api/superadmin/buildings/' + currentAdsBid + '/ads/' + adId, { method: 'DELETE' });
+  loadModalAds();
+}
+
+init();
+</script>
+</body>
+</html>

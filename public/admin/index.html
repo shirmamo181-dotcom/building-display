@@ -9,57 +9,44 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #0f0f1e; color: #e0e0e0; font-family: 'Heebo', Arial, sans-serif; min-height: 100vh; }
 
-  /* Login */
-  #loginScreen {
-    display: flex; align-items: center; justify-content: center;
-    min-height: 100vh;
-  }
-  .login-box {
-    background: #1a1a3e; border: 1px solid #2a2a5a; border-radius: 16px;
-    padding: 48px 40px; width: 340px; text-align: center;
-  }
-  .login-box h2 { font-size: 1.6rem; margin-bottom: 8px; }
-  .login-box p { color: #888; margin-bottom: 28px; font-size: 0.95rem; }
-  .login-box input {
-    width: 100%; padding: 14px 16px; border-radius: 8px;
-    border: 1px solid #333; background: #0f0f1e; color: #fff;
-    font-size: 1rem; margin-bottom: 14px; text-align: right;
-  }
-  .login-box input:focus { outline: none; border-color: #4a4aff; }
-  .btn-primary {
-    background: #4a4aff; color: #fff; border: none; border-radius: 8px;
-    padding: 14px 28px; font-size: 1rem; cursor: pointer; width: 100%;
-    transition: background 0.2s;
-  }
-  .btn-primary:hover { background: #3535cc; }
-  .error-msg { color: #ff6b6b; font-size: 0.9rem; margin-top: 10px; }
-
-  /* Main */
   #mainScreen { display: none; }
   .topbar {
     background: linear-gradient(135deg, #1a1a3e, #2d2d6b);
     padding: 16px 24px; display: flex; align-items: center;
     justify-content: space-between; border-bottom: 3px solid #4a4aff;
-    position: sticky; top: 0; z-index: 100;
+    position: sticky; top: 0; z-index: 100; gap: 12px; flex-wrap: wrap;
   }
-  .topbar h1 { font-size: 1.3rem; }
-  .topbar button {
+  .topbar-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+  .topbar h1 { font-size: 1.2rem; white-space: nowrap; }
+  .building-tag { color: #a0a0ff; font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar-btns { display: flex; gap: 8px; flex-shrink: 0; }
+  .topbar-btns button {
     background: transparent; color: #aaa; border: 1px solid #444;
-    border-radius: 6px; padding: 8px 16px; cursor: pointer; font-size: 0.9rem;
+    border-radius: 6px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-family: inherit;
   }
+  .topbar-btns button:hover { border-color: #4a4aff; color: #fff; }
 
-  /* Tabs */
-  .tabs { display: flex; background: #12122a; border-bottom: 2px solid #2a2a5a; }
+  .name-edit-bar {
+    display: none; background: #12122a; padding: 12px 24px;
+    border-bottom: 1px solid #2a2a5a; gap: 10px; align-items: center;
+  }
+  .name-edit-bar.open { display: flex; }
+  .name-edit-bar input {
+    flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid #4a4aff;
+    background: #0f0f1e; color: #fff; font-size: 0.95rem; text-align: right; font-family: inherit;
+    min-width: 200px;
+  }
+  .name-edit-bar input:focus { outline: none; }
+
+  .tabs { display: flex; background: #12122a; border-bottom: 2px solid #2a2a5a; overflow-x: auto; }
   .tab {
-    padding: 16px 24px; cursor: pointer; font-size: 1rem; color: #888;
+    padding: 15px 18px; cursor: pointer; font-size: 0.95rem; color: #888;
     border-bottom: 3px solid transparent; transition: all 0.2s;
-    flex: 1; text-align: center;
+    white-space: nowrap; text-align: center;
   }
   .tab.active { color: #fff; border-bottom-color: #4a4aff; background: #1a1a3e; }
 
   .content { padding: 24px; max-width: 900px; margin: 0 auto; }
-
-  /* Section */
   .section { display: none; }
   .section.active { display: block; }
 
@@ -67,87 +54,55 @@
     background: #1a1a3e; border: 1px solid #2a2a5a; border-radius: 12px;
     padding: 20px; margin-bottom: 16px;
   }
-  .card-row {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; flex-wrap: wrap;
-  }
-  .card-row span { font-size: 1.05rem; flex: 1; }
-  .office-tag {
-    background: #4a4aff; color: #fff; padding: 6px 14px;
-    border-radius: 6px; font-weight: 700; font-size: 0.95rem;
-  }
+  .card-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .office-tag { background: #4a4aff; color: #fff; padding: 6px 14px; border-radius: 6px; font-weight: 700; font-size: 0.95rem; }
   .btn-del {
     background: transparent; color: #ff6b6b; border: 1px solid #ff6b6b;
-    border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem;
+    border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem; font-family: inherit;
   }
   .btn-del:hover { background: #ff6b6b; color: #fff; }
   .btn-edit {
     background: transparent; color: #4a9eff; border: 1px solid #4a9eff;
-    border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem;
+    border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem; font-family: inherit;
   }
   .btn-edit:hover { background: #4a9eff; color: #fff; }
   .biz-desc-tag { font-size: 0.8rem; color: #888; margin-top: 2px; }
-  .inline-edit-form {
-    display: none; margin-top: 14px; padding-top: 14px;
-    border-top: 1px solid #2a2a5a; gap: 10px; flex-wrap: wrap;
-  }
+
+  .inline-edit-form { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid #2a2a5a; gap: 10px; flex-wrap: wrap; }
   .inline-edit-form.open { display: flex; }
   .inline-edit-form input {
     flex: 1; min-width: 120px; padding: 10px 12px; border-radius: 8px;
     border: 1px solid #4a4aff; background: #0f0f1e; color: #fff;
-    font-size: 0.9rem; text-align: right;
+    font-size: 0.9rem; text-align: right; font-family: inherit;
   }
-  .btn-save {
-    background: #2ecc71; color: #fff; border: none; border-radius: 8px;
-    padding: 10px 20px; cursor: pointer; font-size: 0.9rem; white-space: nowrap;
-  }
-  .btn-save:hover { background: #27ae60; }
-  .btn-cancel {
-    background: transparent; color: #aaa; border: 1px solid #444;
-    border-radius: 8px; padding: 10px 16px; cursor: pointer; font-size: 0.9rem;
-  }
-  .theme-card {
-    border-radius: 14px; overflow: hidden; cursor: pointer;
-    border: 3px solid transparent; transition: border 0.2s, transform 0.15s;
-  }
-  .theme-card:hover { transform: scale(1.03); }
-  .theme-card.active { border-color: #4a4aff; }
-  .theme-preview {
-    height: 100px; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 6px;
-  }
-  .theme-preview span { font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; }
-  .theme-name {
-    background: #1a1a3e; padding: 10px 14px; font-size: 0.9rem;
-    font-weight: 600; text-align: center;
-  }
+  .inline-edit-form input:focus { outline: none; }
 
-  /* Form */
+  .btn-save { background: #2ecc71; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; cursor: pointer; font-size: 0.9rem; white-space: nowrap; font-family: inherit; }
+  .btn-save:hover { background: #27ae60; }
+  .btn-cancel { background: transparent; color: #aaa; border: 1px solid #444; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-size: 0.9rem; font-family: inherit; }
+
   .add-form { background: #12122a; border: 1px solid #2a2a5a; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
   .add-form h3 { margin-bottom: 16px; font-size: 1rem; color: #aaa; }
   .form-row { display: flex; gap: 12px; flex-wrap: wrap; }
   .form-row input, .form-row textarea, .form-row select {
     flex: 1; min-width: 140px; padding: 12px 14px; border-radius: 8px;
     border: 1px solid #333; background: #0f0f1e; color: #fff;
-    font-size: 0.95rem; text-align: right;
+    font-size: 0.95rem; text-align: right; font-family: inherit;
   }
   .form-row input:focus, .form-row textarea:focus { outline: none; border-color: #4a4aff; }
   .form-row textarea { min-height: 80px; resize: vertical; }
-  .btn-add {
-    background: #4a4aff; color: #fff; border: none; border-radius: 8px;
-    padding: 12px 24px; font-size: 0.95rem; cursor: pointer; white-space: nowrap;
-  }
-  .btn-add:hover { background: #3535cc; }
 
-  /* Ads */
+  .btn-add { background: #4a4aff; color: #fff; border: none; border-radius: 8px; padding: 12px 24px; font-size: 0.95rem; cursor: pointer; white-space: nowrap; font-family: inherit; }
+  .btn-add:hover { background: #3535cc; }
+  .btn-primary { background: #4a4aff; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
+  .btn-primary:hover { background: #3535cc; }
+
   .media-card { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
   .media-thumb { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; background: #333; }
   .ad-info { flex: 1; }
   .ad-info strong { display: block; font-size: 1rem; margin-bottom: 4px; }
   .ad-info small { color: #888; font-size: 0.85rem; }
-  .toggle-btn {
-    border: none; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem;
-  }
+  .toggle-btn { border: none; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem; font-family: inherit; }
   .toggle-btn.on { background: #2ecc71; color: #fff; }
   .toggle-btn.off { background: #444; color: #aaa; }
 
@@ -159,55 +114,107 @@
   .file-input-label:hover { border-color: #4a4aff; color: #4a4aff; }
   .file-input-label input { display: none; }
 
+  /* פרטי בניין */
+  .info-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+  .info-label { font-size: 0.8rem; color: #666; }
+  .info-value { font-size: 1rem; color: #fff; font-weight: 600; }
+
+  .pw-form { display: flex; flex-direction: column; gap: 12px; max-width: 400px; }
+  .pw-form input {
+    padding: 12px 14px; border-radius: 8px; border: 1px solid #333;
+    background: #0f0f1e; color: #fff; font-size: 0.95rem; text-align: right; font-family: inherit;
+  }
+  .pw-form input:focus { outline: none; border-color: #4a4aff; }
+
+  .ads-readonly-note {
+    background: rgba(74,74,255,0.08); border: 1px solid rgba(74,74,255,0.25);
+    border-radius: 10px; padding: 20px; text-align: center; color: #888; margin-bottom: 20px;
+  }
+  .ads-readonly-note strong { color: #a0a0ff; display: block; margin-bottom: 6px; font-size: 1rem; }
+
+  .theme-card { border-radius: 14px; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: border 0.2s, transform 0.15s; }
+  .theme-card:hover { transform: scale(1.03); }
+  .theme-card.active { border-color: #4a4aff; }
+  .theme-preview { height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .theme-preview span { font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; }
+  .theme-name { background: #1a1a3e; padding: 10px 14px; font-size: 0.9rem; font-weight: 600; text-align: center; }
+
   .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; color: #fff; }
   .empty-state { text-align: center; color: #555; padding: 40px; font-size: 1rem; }
+  .success-msg { color: #2ecc71; font-size: 0.9rem; margin-top: 10px; }
+  .error-msg2 { color: #ff6b6b; font-size: 0.9rem; margin-top: 10px; }
 
   @media (max-width: 600px) {
-    .tabs .tab { font-size: 0.85rem; padding: 14px 8px; }
+    .tabs .tab { font-size: 0.82rem; padding: 13px 10px; }
     .content { padding: 16px; }
   }
 </style>
 </head>
 <body>
 
-<!-- מסך כניסה -->
-<div id="loginScreen">
-  <div class="login-box">
-    <h2>🏢 פאנל ניהול</h2>
-    <p>בניין משרדים</p>
-    <input type="password" id="passwordInput" placeholder="הכנס סיסמה" onkeydown="if(event.key==='Enter')login()">
-    <button class="btn-primary" onclick="login()">כניסה</button>
-    <div class="error-msg" id="loginError"></div>
-  </div>
-</div>
-
-<!-- מסך ראשי -->
 <div id="mainScreen">
   <div class="topbar">
-    <div style="display:flex;align-items:center;gap:12px;flex:1">
+    <div class="topbar-left">
       <h1>◈ פאנל ניהול</h1>
-      <div id="buildingNameDisplay" style="color:#a0a0ff;font-size:1rem;font-weight:600"></div>
-      <button onclick="showBuildingNameEdit()" style="font-size:0.8rem;padding:5px 10px">✏️ שנה שם</button>
+      <div class="building-tag" id="buildingTag"></div>
     </div>
-    <button onclick="logout()">יציאה</button>
+    <div class="topbar-btns">
+      <button onclick="toggleNameEdit()">✏️ שנה שם</button>
+      <button onclick="logout()">יציאה</button>
+    </div>
   </div>
-  <div id="buildingNameEditBar" style="display:none;background:#12122a;padding:12px 24px;border-bottom:1px solid #2a2a5a;gap:10px;align-items:center">
-    <input type="text" id="buildingNameInput" placeholder="שם הבניין" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid #4a4aff;background:#0f0f1e;color:#fff;font-size:0.95rem;text-align:right;min-width:280px">
-    <button class="btn-primary" style="width:auto;padding:8px 20px" onclick="saveBuildingName()">שמור</button>
-    <button onclick="document.getElementById('buildingNameEditBar').style.display='none'" style="background:transparent;color:#aaa;border:1px solid #444;border-radius:6px;padding:8px 14px;cursor:pointer">ביטול</button>
+  <div class="name-edit-bar" id="nameEditBar">
+    <input type="text" id="buildingNameInput" placeholder="שם הבניין">
+    <button class="btn-primary" onclick="saveBuildingName()">שמור</button>
+    <button onclick="toggleNameEdit()" style="background:transparent;color:#aaa;border:1px solid #444;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:inherit">ביטול</button>
   </div>
 
   <div class="tabs">
-    <div class="tab active" onclick="showTab('businesses', this)">🏪 עסקים</div>
-    <div class="tab" onclick="showTab('ads', this)">📢 פרסומות</div>
-    <div class="tab" onclick="showTab('updates', this)">📋 עדכונים</div>
-    <div class="tab" onclick="showTab('themes', this)">🎨 ערכות נושא</div>
+    <div class="tab active" onclick="showTab('building',this)">🏢 פרטי בניין</div>
+    <div class="tab" onclick="showTab('businesses',this)">🏪 עסקים</div>
+    <div class="tab" id="adsTab" onclick="showTab('ads',this)">📢 פרסומות</div>
+    <div class="tab" onclick="showTab('updates',this)">📋 עדכונים</div>
+    <div class="tab" onclick="showTab('themes',this)">🎨 ערכות נושא</div>
   </div>
 
   <div class="content">
 
+    <!-- פרטי בניין -->
+    <div class="section active" id="section-building">
+      <div class="section-title">פרטי בניין</div>
+      <div class="card">
+        <div class="info-row">
+          <div class="info-label">שם הבניין</div>
+          <div class="info-value" id="infoBuildingName">—</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">שם משתמש (ת"ז)</div>
+          <div class="info-value" id="infoBuildingId">—</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">מייל</div>
+          <div class="info-value" id="infoBuildingEmail">—</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">תאריך הצטרפות</div>
+          <div class="info-value" id="infoBuildingDate">—</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:24px">
+        <div class="section-title" style="font-size:1rem;margin-bottom:16px">שינוי סיסמה</div>
+        <div class="pw-form" id="pwForm">
+          <input type="password" id="pwOld" placeholder="סיסמה נוכחית">
+          <input type="password" id="pwNew" placeholder="סיסמה חדשה">
+          <input type="password" id="pwConfirm" placeholder="אימות סיסמה חדשה">
+          <button class="btn-save" style="width:fit-content" onclick="changePassword()">שנה סיסמה</button>
+          <div id="pwMsg"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- עסקים -->
-    <div class="section active" id="section-businesses">
+    <div class="section" id="section-businesses">
       <div class="section-title">ניהול עסקים</div>
       <div class="add-form">
         <h3>הוספת עסק חדש</h3>
@@ -215,7 +222,7 @@
           <input type="text" id="newBizName" placeholder="שם העסק">
           <input type="text" id="newBizOffice" placeholder="מספר חדר" style="max-width:110px">
           <input type="text" id="newBizFloor" placeholder="קומה" style="max-width:80px">
-          <input type="text" id="newBizDesc" placeholder="תיאור העסק (אופציונלי)">
+          <input type="text" id="newBizDesc" placeholder="תיאור (אופציונלי)">
           <button class="btn-add" onclick="addBusiness()">+ הוסף</button>
         </div>
       </div>
@@ -224,24 +231,12 @@
 
     <!-- פרסומות -->
     <div class="section" id="section-ads">
-      <div class="section-title">ניהול פרסומות</div>
-      <div class="add-form">
-        <h3>הוספת פרסומת</h3>
-        <div class="form-row" style="margin-bottom:12px">
-          <input type="text" id="adTitle" placeholder="שם המפרסם / כותרת">
-          <input type="number" id="adDuration" placeholder="שניות תצוגה" value="6" style="max-width:160px">
-        </div>
-        <label class="file-input-label">
-          📁 לחץ לבחירת תמונה או סרטון (MP4, JPG, PNG, GIF)
-          <input type="file" id="adFile" accept="image/*,video/mp4">
-        </label>
-        <div id="fileSelected" style="color:#4a9eff;font-size:0.9rem;margin-bottom:12px"></div>
-        <button class="btn-add" onclick="uploadAd()">+ העלה פרסומת</button>
-      </div>
+      <div class="section-title">פרסומות</div>
+      <div id="adsManageArea"></div>
       <div id="adList"></div>
     </div>
 
-    <!-- עדכוני בניין -->
+    <!-- עדכונים -->
     <div class="section" id="section-updates">
       <div class="section-title">עדכוני בניין</div>
       <div class="add-form">
@@ -257,48 +252,123 @@
     <!-- ערכות נושא -->
     <div class="section" id="section-themes">
       <div class="section-title">ערכות נושא למסך</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:16px" id="themeGrid"></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-top:16px" id="themeGrid"></div>
     </div>
 
   </div>
 </div>
 
 <script>
-// --- Auth ---
-async function login() {
-  const pw = document.getElementById('passwordInput').value;
-  const res = await fetch('/api/login', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ password: pw })
-  });
-  if (res.ok) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainScreen').style.display = 'block';
-    loadAll();
-  } else {
-    document.getElementById('loginError').textContent = 'סיסמה שגויה, נסה שוב';
+const BID = location.pathname.split('/')[2];
+let canManageAds = false;
+
+async function init() {
+  const me = await fetch('/api/me').then(r => r.json());
+  if (!me.role || (me.role === 'building' && me.buildingId !== BID)) {
+    location.href = '/login'; return;
   }
+  document.getElementById('mainScreen').style.display = 'block';
+  loadAll();
 }
 
 async function logout() {
   await fetch('/api/logout', { method: 'POST' });
-  location.reload();
+  location.href = '/login';
 }
 
-// --- Tabs ---
 function showTab(name, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('section-' + name).classList.add('active');
   if (name === 'themes') loadThemes();
+  if (name === 'ads') loadAds();
 }
 
-function loadAll() { loadBusinesses(); loadAds(); loadUpdates(); loadBuildingName(); }
+function loadAll() { loadBuildingInfo(); loadBusinesses(); loadUpdates(); }
+
+// --- פרטי בניין ---
+async function loadBuildingInfo() {
+  const data = await fetch('/api/' + BID + '/building-info').then(r => r.json()).catch(() => ({}));
+  canManageAds = !!data.canManageAds;
+  document.getElementById('infoBuildingName').textContent = data.name || '—';
+  document.getElementById('infoBuildingId').textContent   = data.id   || BID;
+  document.getElementById('infoBuildingEmail').textContent = data.email || '—';
+  document.getElementById('infoBuildingDate').textContent  = data.createdAt || '—';
+  document.getElementById('buildingTag').textContent = data.name || '';
+  document.getElementById('buildingNameInput').value = data.name || '';
+  renderAdsArea();
+}
+
+function renderAdsArea() {
+  const area = document.getElementById('adsManageArea');
+  if (canManageAds) {
+    area.innerHTML = `
+      <div class="add-form">
+        <h3>הוספת פרסומת</h3>
+        <div class="form-row" style="margin-bottom:12px">
+          <input type="text" id="adTitle" placeholder="שם המפרסם / כותרת">
+          <input type="number" id="adDuration" placeholder="שניות תצוגה" value="6" style="max-width:160px">
+        </div>
+        <label class="file-input-label">
+          📁 לחץ לבחירת תמונה או סרטון
+          <input type="file" id="adFile" accept="image/*,video/mp4" onchange="document.getElementById('fileSelected').textContent=this.files[0]?.name||''">
+        </label>
+        <div id="fileSelected" style="color:#4a9eff;font-size:0.9rem;margin-bottom:12px"></div>
+        <button class="btn-add" onclick="uploadAd()">+ העלה פרסומת</button>
+      </div>`;
+  } else {
+    area.innerHTML = `
+      <div class="ads-readonly-note">
+        <strong>📢 צפייה בפרסומות בלבד</strong>
+        ניהול פרסומות מתבצע על ידי צוות Building Display.<br>
+        לפרסום חדש או שינויים, צרו קשר: <strong>052-6060848</strong>
+      </div>`;
+  }
+}
+
+async function changePassword() {
+  const oldPw  = document.getElementById('pwOld').value;
+  const newPw  = document.getElementById('pwNew').value;
+  const confPw = document.getElementById('pwConfirm').value;
+  const msg    = document.getElementById('pwMsg');
+  msg.textContent = '';
+  if (!oldPw || !newPw || !confPw) { msg.className='error-msg2'; msg.textContent='נא למלא את כל השדות'; return; }
+  if (newPw !== confPw) { msg.className='error-msg2'; msg.textContent='הסיסמאות החדשות אינן תואמות'; return; }
+  if (newPw.length < 6) { msg.className='error-msg2'; msg.textContent='הסיסמה חייבת להכיל לפחות 6 תווים'; return; }
+  const res = await fetch('/api/' + BID + '/change-password', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    msg.className='success-msg'; msg.textContent='הסיסמה שונתה בהצלחה!';
+    document.getElementById('pwOld').value = '';
+    document.getElementById('pwNew').value = '';
+    document.getElementById('pwConfirm').value = '';
+  } else {
+    msg.className='error-msg2'; msg.textContent = data.error || 'שגיאה בשינוי סיסמה';
+  }
+}
+
+function toggleNameEdit() {
+  document.getElementById('nameEditBar').classList.toggle('open');
+}
+
+async function saveBuildingName() {
+  const name = document.getElementById('buildingNameInput').value.trim();
+  if (!name) return alert('נא להזין שם בניין');
+  await fetch('/api/' + BID + '/settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ buildingName: name })
+  });
+  document.getElementById('nameEditBar').classList.remove('open');
+  loadBuildingInfo();
+}
 
 // --- עסקים ---
 async function loadBusinesses() {
-  const data = await fetch('/api/businesses').then(r => r.json());
+  const data = await fetch('/api/' + BID + '/businesses').then(r => r.json());
   const el = document.getElementById('businessList');
   if (!data.length) { el.innerHTML = '<div class="empty-state">אין עסקים עדיין</div>'; return; }
   el.innerHTML = data.map(b => `
@@ -313,10 +383,10 @@ async function loadBusinesses() {
         <button class="btn-del" onclick="deleteBusiness(${b.id})">מחק</button>
       </div>
       <div class="inline-edit-form" id="edit-${b.id}">
-        <input type="text" id="edit-name-${b.id}" value="${b.name}" placeholder="שם העסק">
-        <input type="text" id="edit-office-${b.id}" value="${b.office}" placeholder="מספר חדר" style="max-width:110px">
-        <input type="text" id="edit-floor-${b.id}" value="${b.floor||''}" placeholder="קומה" style="max-width:80px">
-        <input type="text" id="edit-desc-${b.id}" value="${b.description||''}" placeholder="תיאור העסק">
+        <input type="text" id="en-${b.id}" value="${b.name}" placeholder="שם העסק">
+        <input type="text" id="eo-${b.id}" value="${b.office}" placeholder="מספר חדר" style="max-width:110px">
+        <input type="text" id="ef-${b.id}" value="${b.floor||''}" placeholder="קומה" style="max-width:80px">
+        <input type="text" id="ed-${b.id}" value="${b.description||''}" placeholder="תיאור">
         <button class="btn-save" onclick="saveBusiness(${b.id})">שמור</button>
         <button class="btn-cancel" onclick="toggleEdit(${b.id})">ביטול</button>
       </div>
@@ -324,18 +394,15 @@ async function loadBusinesses() {
   `).join('');
 }
 
-function toggleEdit(id) {
-  const form = document.getElementById('edit-' + id);
-  form.classList.toggle('open');
-}
+function toggleEdit(id) { document.getElementById('edit-'+id).classList.toggle('open'); }
 
 async function saveBusiness(id) {
-  const name = document.getElementById('edit-name-' + id).value.trim();
-  const office = document.getElementById('edit-office-' + id).value.trim();
-  const floor = document.getElementById('edit-floor-' + id).value.trim();
-  const description = document.getElementById('edit-desc-' + id).value.trim();
+  const name = document.getElementById('en-'+id).value.trim();
+  const office = document.getElementById('eo-'+id).value.trim();
+  const floor = document.getElementById('ef-'+id).value.trim();
+  const description = document.getElementById('ed-'+id).value.trim();
   if (!name || !office) return alert('נא למלא שם ומספר חדר');
-  await fetch('/api/businesses/' + id, {
+  await fetch('/api/' + BID + '/businesses/' + id, {
     method: 'PUT', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ name, office, floor, description })
   });
@@ -343,59 +410,32 @@ async function saveBusiness(id) {
 }
 
 async function addBusiness() {
-  const name = document.getElementById('newBizName').value.trim();
+  const name   = document.getElementById('newBizName').value.trim();
   const office = document.getElementById('newBizOffice').value.trim();
-  const floor = document.getElementById('newBizFloor').value.trim();
-  const description = document.getElementById('newBizDesc').value.trim();
+  const floor  = document.getElementById('newBizFloor').value.trim();
+  const desc   = document.getElementById('newBizDesc').value.trim();
   if (!name || !office) return alert('נא למלא שם ומספר חדר');
-  const res = await fetch('/api/businesses', {
+  const res = await fetch('/api/' + BID + '/businesses', {
     method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ name, office, floor, description })
+    body: JSON.stringify({ name, office, floor, description: desc })
   });
-  if (res.status === 401) { alert('פג תוקף הכניסה — נא להתחבר מחדש'); location.reload(); return; }
-  document.getElementById('newBizName').value = '';
+  if (res.status === 401) { location.href = '/login'; return; }
+  document.getElementById('newBizName').value   = '';
   document.getElementById('newBizOffice').value = '';
-  document.getElementById('newBizFloor').value = '';
-  document.getElementById('newBizDesc').value = '';
+  document.getElementById('newBizFloor').value  = '';
+  document.getElementById('newBizDesc').value   = '';
   loadBusinesses();
-}
-
-async function loadBuildingName() {
-  const data = await fetch('/api/settings').then(r => r.json()).catch(() => ({}));
-  const name = data.buildingName || '';
-  document.getElementById('buildingNameDisplay').textContent = name;
-  document.getElementById('buildingNameInput').value = name;
-}
-
-function showBuildingNameEdit() {
-  const bar = document.getElementById('buildingNameEditBar');
-  bar.style.display = bar.style.display === 'none' ? 'flex' : 'none';
-}
-
-async function saveBuildingName() {
-  const name = document.getElementById('buildingNameInput').value.trim();
-  if (!name) return alert('נא להזין שם בניין');
-  await fetch('/api/settings', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ buildingName: name })
-  });
-  document.getElementById('buildingNameEditBar').style.display = 'none';
-  loadBuildingName();
 }
 
 async function deleteBusiness(id) {
   if (!confirm('למחוק עסק זה?')) return;
-  await fetch('/api/businesses/' + id, { method: 'DELETE' });
+  await fetch('/api/' + BID + '/businesses/' + id, { method: 'DELETE' });
   loadBusinesses();
 }
 
 // --- פרסומות ---
-document.getElementById('adFile')?.addEventListener('change', function() {
-  document.getElementById('fileSelected').textContent = this.files[0]?.name || '';
-});
-
 async function loadAds() {
-  const data = await fetch('/api/ads/all').then(r => r.json());
+  const data = await fetch('/api/' + BID + '/ads/all').then(r => r.json());
   const el = document.getElementById('adList');
   if (!data.length) { el.innerHTML = '<div class="empty-state">אין פרסומות עדיין</div>'; return; }
   el.innerHTML = data.map(a => `
@@ -406,51 +446,47 @@ async function loadAds() {
           : a.url ? `<img class="media-thumb" src="${a.url}" alt="">` : `<div class="media-thumb"></div>`}
         <div class="ad-info">
           <strong>${a.title}</strong>
-          <small>${a.duration} שניות תצוגה</small>
+          <small>${a.duration} שניות תצוגה | ${a.active ? 'פעיל' : 'מושהה'}</small>
         </div>
-        <button class="toggle-btn ${a.active ? 'on' : 'off'}" onclick="toggleAd(${a.id}, ${!a.active})">
-          ${a.active ? '✓ פעיל' : '⏸ מושהה'}
-        </button>
-        <button class="btn-del" onclick="deleteAd(${a.id})">מחק</button>
+        ${canManageAds ? `
+          <button class="toggle-btn ${a.active ? 'on' : 'off'}" onclick="toggleAd(${a.id},${!a.active})">
+            ${a.active ? '✓ פעיל' : '⏸ מושהה'}
+          </button>
+          <button class="btn-del" onclick="deleteAd(${a.id})">מחק</button>
+        ` : ''}
       </div>
     </div>
   `).join('');
 }
 
 async function uploadAd() {
-  const title = document.getElementById('adTitle').value.trim();
-  const file = document.getElementById('adFile').files[0];
+  if (!canManageAds) return;
+  const title    = document.getElementById('adTitle').value.trim();
+  const file     = document.getElementById('adFile').files[0];
   const duration = document.getElementById('adDuration').value || 6;
   if (!title) return alert('נא להכניס שם מפרסם');
-  if (!file) return alert('נא לבחור קובץ');
+  if (!file)  return alert('נא לבחור קובץ');
   const form = new FormData();
-  form.append('title', title);
-  form.append('duration', duration);
+  form.append('title', title); form.append('duration', duration);
   form.append('active', 'true');
   form.append('type', file.type.startsWith('video') ? 'video' : 'image');
   form.append('file', file);
   const btn = document.querySelector('[onclick="uploadAd()"]');
-  const orig = btn.textContent;
-  btn.textContent = '⏳ מעלה לענן...';
-  btn.disabled = true;
+  btn.textContent = '⏳ מעלה...'; btn.disabled = true;
   try {
-    const res = await fetch('/api/ads', { method: 'POST', body: form });
+    const res = await fetch('/api/' + BID + '/ads', { method: 'POST', body: form });
     const result = await res.json();
-    if (!result.url) throw new Error('לא התקבל קישור מהענן — בדקי הגדרות Cloudinary');
+    if (!result.url) throw new Error('לא התקבל קישור מהענן');
     document.getElementById('adTitle').value = '';
-    document.getElementById('adFile').value = '';
+    document.getElementById('adFile').value  = '';
     document.getElementById('fileSelected').textContent = '';
     loadAds();
-  } catch(e) {
-    alert('שגיאה בהעלאה: ' + e.message);
-  } finally {
-    btn.textContent = orig;
-    btn.disabled = false;
-  }
+  } catch(e) { alert('שגיאה: ' + e.message); }
+  btn.textContent = '+ העלה פרסומת'; btn.disabled = false;
 }
 
 async function toggleAd(id, active) {
-  await fetch('/api/ads/' + id, {
+  await fetch('/api/' + BID + '/ads/' + id, {
     method: 'PUT', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ active: String(active) })
   });
@@ -459,28 +495,17 @@ async function toggleAd(id, active) {
 
 async function deleteAd(id) {
   if (!confirm('למחוק פרסומת זו?')) return;
-  await fetch('/api/ads/' + id, { method: 'DELETE' });
+  await fetch('/api/' + BID + '/ads/' + id, { method: 'DELETE' });
   loadAds();
 }
 
 // --- עדכונים ---
-async function handleRes(res) {
-  if (res.status === 401) {
-    alert('פג תוקף הכניסה — נא להתחבר מחדש');
-    req.session = null;
-    location.reload();
-    return false;
-  }
-  return true;
-}
-
 async function loadUpdates() {
-  const res = await fetch('/api/updates');
-  const data = await res.json();
+  const data = await fetch('/api/' + BID + '/updates').then(r => r.json());
   const el = document.getElementById('updateList');
   if (!data.length) { el.innerHTML = '<div class="empty-state">אין עדכונים עדיין</div>'; return; }
   el.innerHTML = data.map((u, i) => `
-    <div class="card" id="update-card-${u.id}">
+    <div class="card">
       <div class="card-row">
         <div style="display:flex;flex-direction:column;gap:4px;margin-left:8px">
           <button class="toggle-btn on" style="padding:2px 8px;font-size:0.75rem" onclick="reorderUpdate(${u.id},'up')" ${i===0?'disabled':''}>▲</button>
@@ -490,8 +515,8 @@ async function loadUpdates() {
         <button class="btn-edit" onclick="toggleUpdateEdit(${u.id})">✏️ עריכה</button>
         <button class="btn-del" onclick="deleteUpdate(${u.id})">מחק</button>
       </div>
-      <div class="inline-edit-form" id="update-edit-${u.id}" style="display:none">
-        <textarea id="update-edit-text-${u.id}" style="width:100%;min-height:80px;padding:10px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-size:0.95rem;font-family:inherit;resize:vertical">${u.text}</textarea>
+      <div class="inline-edit-form" id="ue-${u.id}" style="display:none">
+        <textarea id="uet-${u.id}" style="width:100%;min-height:80px;padding:10px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;resize:vertical">${u.text}</textarea>
         <div style="display:flex;gap:8px;margin-top:8px">
           <button class="btn-save" onclick="saveUpdate(${u.id})">שמור</button>
           <button class="btn-cancel" onclick="toggleUpdateEdit(${u.id})">ביטול</button>
@@ -504,78 +529,76 @@ async function loadUpdates() {
 async function addUpdate() {
   const text = document.getElementById('newUpdateText').value.trim();
   if (!text) return alert('נא לכתוב הודעה');
-  const res = await fetch('/api/updates', {
+  const res = await fetch('/api/' + BID + '/updates', {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ text })
   });
-  if (res.status === 401) { alert('פג תוקף הכניסה — נא להתחבר מחדש'); location.reload(); return; }
+  if (res.status === 401) { location.href = '/login'; return; }
   document.getElementById('newUpdateText').value = '';
   loadUpdates();
 }
 
 async function deleteUpdate(id) {
   if (!confirm('למחוק עדכון זה?')) return;
-  const res = await fetch('/api/updates/' + id, { method: 'DELETE' });
-  if (res.status === 401) { alert('פג תוקף הכניסה — נא להתחבר מחדש'); location.reload(); return; }
+  await fetch('/api/' + BID + '/updates/' + id, { method: 'DELETE' });
   loadUpdates();
 }
 
 function toggleUpdateEdit(id) {
-  const form = document.getElementById('update-edit-' + id);
-  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  const f = document.getElementById('ue-'+id);
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
 }
 
 async function saveUpdate(id) {
-  const text = document.getElementById('update-edit-text-' + id).value.trim();
+  const text = document.getElementById('uet-'+id).value.trim();
   if (!text) return alert('הטקסט לא יכול להיות ריק');
-  const res = await fetch('/api/updates/' + id, {
+  await fetch('/api/' + BID + '/updates/' + id, {
     method: 'PUT', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ text })
   });
-  if (res.status === 401) { alert('פג תוקף הכניסה — נא להתחבר מחדש'); location.reload(); return; }
   loadUpdates();
 }
 
 async function reorderUpdate(id, direction) {
-  const res = await fetch('/api/updates/reorder', {
+  await fetch('/api/' + BID + '/updates/reorder', {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ id, direction })
   });
-  if (res.status === 401) { alert('פג תוקף הכניסה — נא להתחבר מחדש'); location.reload(); return; }
   loadUpdates();
 }
 
 // --- ערכות נושא ---
 const THEMES = [
-  { id: 'wood',     name: 'עץ יוקרתי',     bg: 'linear-gradient(135deg,#3b1e0a,#1c1208)',  accent: '#c9a257', text: '#ede0cc' },
-  { id: 'navy',     name: 'כחול עמוק',      bg: 'linear-gradient(135deg,#0d2a4a,#020810)',  accent: '#7eb8d4', text: '#ddeeff' },
-  { id: 'white',    name: 'מינימל בהיר',    bg: 'linear-gradient(135deg,#e8edf8,#dfe5f5)',  accent: '#1a3a6e', text: '#1a2340' },
-  { id: 'green',    name: 'ירוק יוקרתי',    bg: 'linear-gradient(135deg,#0d3320,#030d06)',  accent: '#c9a257', text: '#d8ede0' },
-  { id: 'charcoal', name: 'אפור מודרני',    bg: 'linear-gradient(135deg,#1c1c1c,#0e0e0e)',  accent: '#e0e0e0', text: '#f0f0f0' },
+  { id: 'wood',     name: 'עץ יוקרתי',  bg: 'linear-gradient(135deg,#3b1e0a,#1c1208)', accent: '#c9a257', text: '#ede0cc' },
+  { id: 'navy',     name: 'כחול עמוק',   bg: 'linear-gradient(135deg,#0d2a4a,#020810)', accent: '#7eb8d4', text: '#ddeeff' },
+  { id: 'white',    name: 'מינימל בהיר', bg: 'linear-gradient(135deg,#e8edf8,#dfe5f5)', accent: '#1a3a6e', text: '#1a2340' },
+  { id: 'green',    name: 'ירוק יוקרתי', bg: 'linear-gradient(135deg,#0d3320,#030d06)', accent: '#c9a257', text: '#d8ede0' },
+  { id: 'charcoal', name: 'אפור מודרני', bg: 'linear-gradient(135deg,#1c1c1c,#0e0e0e)', accent: '#e0e0e0', text: '#f0f0f0' },
 ];
 
 async function loadThemes() {
-  const { theme: current } = await fetch('/api/theme').then(r => r.json()).catch(() => ({ theme: 'wood' }));
-  const grid = document.getElementById('themeGrid');
-  grid.innerHTML = THEMES.map(t => `
-    <div class="theme-card ${t.id === current ? 'active' : ''}" onclick="setTheme('${t.id}')">
+  const { theme: cur } = await fetch('/api/' + BID + '/theme').then(r => r.json()).catch(() => ({ theme: 'wood' }));
+  document.getElementById('themeGrid').innerHTML = THEMES.map(t => `
+    <div class="theme-card ${t.id === cur ? 'active' : ''}" onclick="setTheme('${t.id}')">
       <div class="theme-preview" style="background:${t.bg}">
         <div style="width:60%;height:8px;border-radius:4px;background:${t.accent};opacity:0.8"></div>
         <span style="color:${t.text}">◈ ${t.name}</span>
         <div style="width:40%;height:4px;border-radius:4px;background:${t.accent};opacity:0.4"></div>
       </div>
-      <div class="theme-name">${t.name}${t.id === current ? ' ✓' : ''}</div>
+      <div class="theme-name">${t.name}${t.id === cur ? ' ✓' : ''}</div>
     </div>
   `).join('');
 }
 
 async function setTheme(id) {
-  await fetch('/api/theme', {
+  await fetch('/api/' + BID + '/theme', {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ theme: id })
   });
   loadThemes();
 }
+
+init();
 </script>
 </body>
 </html>

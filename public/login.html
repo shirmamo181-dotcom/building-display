@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>כניסה — מערכת מסכי בניין</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: linear-gradient(160deg, #0a0a1a 0%, #0f0f2e 50%, #080818 100%);
+    color: #e0e0e0; font-family: 'Heebo', Arial, sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  }
+  .login-wrap {
+    width: 100%; max-width: 400px; padding: 24px;
+  }
+  .logo {
+    text-align: center; margin-bottom: 36px;
+  }
+  .logo-icon { font-size: 2.8rem; margin-bottom: 10px; }
+  .logo h1 { font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: 1px; }
+  .logo p { font-size: 0.85rem; color: #666; margin-top: 4px; }
+
+  .login-box {
+    background: #1a1a3e;
+    border: 1px solid #2a2a5a;
+    border-radius: 20px;
+    padding: 40px 36px;
+  }
+  .login-box h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 28px; color: #fff; }
+
+  label { display: block; font-size: 0.82rem; color: #888; margin-bottom: 6px; }
+  input {
+    width: 100%; padding: 14px 16px; border-radius: 10px;
+    border: 1px solid #333; background: #0f0f1e; color: #fff;
+    font-size: 1rem; margin-bottom: 18px; text-align: right; font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  input:focus { outline: none; border-color: #4a4aff; }
+
+  .btn-login {
+    width: 100%; padding: 15px; background: #4a4aff; color: #fff;
+    border: none; border-radius: 10px; font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: background 0.2s; font-family: inherit;
+    letter-spacing: 0.5px;
+  }
+  .btn-login:hover { background: #3535cc; }
+  .btn-login:disabled { background: #333; cursor: default; }
+
+  .error-msg {
+    color: #ff6b6b; font-size: 0.88rem; margin-top: 14px;
+    text-align: center; min-height: 20px;
+  }
+  .footer-note {
+    text-align: center; margin-top: 24px; font-size: 0.78rem; color: #444;
+  }
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="logo">
+    <div class="logo-icon">◈</div>
+    <h1>מערכת מסכי בניין</h1>
+    <p>Building Display System</p>
+  </div>
+  <div class="login-box">
+    <h2>כניסה לפאנל הניהול</h2>
+    <label>שם משתמש (ת"ז / מזהה)</label>
+    <input type="text" id="username" placeholder="הכנס שם משתמש" autocomplete="username">
+    <label>סיסמה</label>
+    <input type="password" id="password" placeholder="הכנס סיסמה" autocomplete="current-password"
+           onkeydown="if(event.key==='Enter') login()">
+    <button class="btn-login" id="loginBtn" onclick="login()">כניסה</button>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+  <div class="footer-note">© 2026 Building Display System</div>
+</div>
+<script>
+async function login() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('errorMsg');
+  if (!username || !password) { err.textContent = 'נא למלא שם משתמש וסיסמה'; return; }
+  btn.disabled = true; btn.textContent = 'מתחבר...'; err.textContent = '';
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      if (data.role === 'superadmin') location.href = '/admin';
+      else location.href = '/admin/' + data.buildingId;
+    } else {
+      err.textContent = data.error || 'שגיאה בכניסה';
+    }
+  } catch(e) {
+    err.textContent = 'שגיאת חיבור, נסה שוב';
+  }
+  btn.disabled = false; btn.textContent = 'כניסה';
+}
+</script>
+</body>
+</html>

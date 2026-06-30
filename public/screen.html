@@ -352,38 +352,40 @@
   .news-slide {
     position: absolute;
     inset: 0;
-    display: flex;
-    flex-direction: column;
     opacity: 0;
     transition: opacity 0.6s ease;
     pointer-events: none;
+    overflow: hidden;
   }
   .news-slide.active { opacity: 1; pointer-events: auto; }
   .news-slide-img {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    flex: 1;
+    height: 100%;
     object-fit: cover;
     display: block;
-    background: #e8eef5;
   }
   .news-slide-img-placeholder {
-    width: 100%;
-    flex: 1;
+    position: absolute;
+    inset: 0;
     background: linear-gradient(135deg, #1a2340 0%, #2a3a6a 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.5rem;
+    font-size: 3rem;
   }
   .news-slide-caption {
-    flex-shrink: 0;
-    background: rgba(13,27,62,0.92);
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(5,10,30,0.97) 0%, rgba(5,10,30,0.85) 70%, transparent 100%);
     color: #fff;
-    padding: 10px 14px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    line-height: 1.45;
+    padding: 28px 14px 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1.5;
     direction: rtl;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
   }
   .news-slide-caption .ih-badge {
     display: inline-block;

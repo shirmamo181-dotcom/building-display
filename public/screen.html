@@ -305,76 +305,47 @@
 
   /* ===== ערכת צבעונית — vibrant ===== */
 
-  /* רקע לבן, כתב שחור */
-  body.theme-vibrant { background: #f5f7fa; }
+  /* רקע לבן */
+  body.theme-vibrant { background: #f4f6fa; }
 
-  /* סרגל עליון */
-  body.theme-vibrant .top-bar {
-    background: linear-gradient(135deg, #1a2340, #0d1b3e);
-    border-bottom: 3px solid #1a2340;
-  }
-  body.theme-vibrant .building-name { color: #fff; }
-  body.theme-vibrant .clock { color: #fff; }
-  body.theme-vibrant .date { color: rgba(255,255,255,0.65); }
-  /* עדכוני דיירים — ניקוי רקעי צבע, עיגול במקום מעוין */
-  body.theme-vibrant .update-item {
-    color: #fff;
-    background: transparent;
-    border: none;
-  }
-  body.theme-vibrant .update-item::before { content: '●'; color: #5bc8f5; background: none; }
+  /* סרגל עליון — זהה */
+  body.theme-vibrant .update-item { color: #fff; background: transparent; border: none; }
+  body.theme-vibrant .update-item::before { content: '●'; background: none; }
 
-  /* כרטיסים */
-  body.theme-vibrant .panel {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  /* עמודות: ימין=עסקים(col3), אמצע=תחזית+חדשות(col2), שמאל=פרסומות(col1) */
+  body.theme-vibrant #mainBody {
+    grid-template-columns: 1.1fr 1.5fr 1fr;
   }
-  body.theme-vibrant .panel-header { background: #f8faff; border-bottom: 1px solid #e8eef8; }
-  body.theme-vibrant .panel-title { color: #1a2340; }
+  body.theme-vibrant #mainBody > .panel:not(.left-panel) { grid-column: 3; } /* עסקים → ימין */
+  body.theme-vibrant #mainBody > .promo-panel            { grid-column: 1; } /* פרסומות → שמאל */
+  body.theme-vibrant #mainBody > .left-panel             { grid-column: 2; } /* תחזית → אמצע */
 
-  /* עסקים — כפתורים שחור/לבן לסירוגין, ללא גבולות צבעוניים */
+  /* פאנלים לבנים, כתב שחור */
+  body.theme-vibrant .panel { background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 14px rgba(0,0,0,0.07); }
+  body.theme-vibrant .panel-header { background: #f8f9fc; border-bottom: 1px solid #e8eef8; }
+  body.theme-vibrant .panel-title { color: #111; }
+
+  /* עסקים — ללא גבולות צבעוניים */
   body.theme-vibrant .biz-item { border-bottom: 1px solid #f0f3f8; border-right: none !important; }
-  body.theme-vibrant .biz-name { color: #1a2340; }
+  body.theme-vibrant .biz-item.alt { background: #f9fafb; }
+  body.theme-vibrant .biz-name { color: #111; }
   body.theme-vibrant .biz-desc { color: #6b7c9a; }
-  body.theme-vibrant .biz-office {
-    background: #1a2340;
-    color: #fff;
-  }
-  body.theme-vibrant .biz-item.alt .biz-office {
-    background: #fff;
-    color: #1a2340;
-    border: 1.5px solid #1a2340;
-  }
+  /* כפתורים: אי-זוגי = שחור/לבן, זוגי = לבן/שחור */
+  body.theme-vibrant .biz-office { background: #111; color: #fff; border: none; }
+  body.theme-vibrant .biz-item.alt .biz-office { background: #fff; color: #111; border: 1.5px solid #111; }
 
-  /* פרסומות — עוברות לשמאל, תחזית+חדשות לאמצע */
-  body.theme-vibrant .promo-panel { order: 3; background: #fff; border: 1px solid #e2e8f0; }
-  body.theme-vibrant .left-panel  { order: 2; }
-  body.theme-vibrant .promo-contact-bar {
-    background: #1a2340;
-    color: #fff;
-  }
+  /* פרסומות */
+  body.theme-vibrant .promo-panel { background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 14px rgba(0,0,0,0.07); }
+  body.theme-vibrant .promo-contact-bar { background: #111; color: #fff; }
 
-  /* תחזית */
-  body.theme-vibrant .weather-section { border-bottom: 1px solid #e8eef8; }
-
-  /* כותרת ישראל היום — צבעי הלוגו המקורי */
-  body.theme-vibrant .ih-logo {
-    background: #d62b2b;   /* אדום ישראל היום */
-    color: #fff;
-  }
-  body.theme-vibrant .ih-badge { background: #d62b2b; }
-  body.theme-vibrant .news-section-title { color: #1a2340; }
-
-  /* רצועת ynet — צבעי הלוגו המקורי */
-  body.theme-vibrant .news-bar { background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.08); }
-  body.theme-vibrant .news-bar > div:first-child {
-    background: #c0001a !important;  /* אדום ynet */
-  }
-  body.theme-vibrant .news-item { color: #1a2340; }
+  /* כותרות מדיה — צבעי לוגו מקוריים */
+  body.theme-vibrant .ih-logo  { background: #cc0000; color: #fff; }   /* ישראל היום — אדום */
+  body.theme-vibrant .ih-badge { background: #cc0000; }
+  body.theme-vibrant .news-section-title { color: #111; }
+  body.theme-vibrant .news-bar { background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.07); }
+  body.theme-vibrant .news-bar > div:first-child { background: #c0001a !important; } /* ynet — אדום */
+  body.theme-vibrant .news-item { color: #111; }
   body.theme-vibrant .news-time { background: #f0f3f8; color: #3a5a8a; }
-
-  /* עיגול במקום מעוין ב-ynet */
   body.theme-vibrant .news-item::before { content: '●'; color: #c0001a; }
 
   /* תחזית שבועית */

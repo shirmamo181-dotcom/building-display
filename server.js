@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const FileStore = require('session-file-store')(session);
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const fetch = require('node-fetch');
@@ -34,11 +35,15 @@ const upload = multer({ storage });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+const SESSIONS_PATH = path.join(__dirname, 'data', 'sessions');
+if (!fs.existsSync(SESSIONS_PATH)) fs.mkdirSync(SESSIONS_PATH, { recursive: true });
+
 app.use(session({
+  store: new FileStore({ path: SESSIONS_PATH, retries: 0, ttl: 30 * 24 * 60 * 60 }),
   secret: process.env.SESSION_SECRET || 'building-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 }
+  cookie: { secure: false, httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 }
 }));
 
 // --- נתונים ---

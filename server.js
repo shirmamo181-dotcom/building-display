@@ -60,6 +60,18 @@ function readBuildings() {
 }
 function writeBuildings(data) { fs.writeFileSync(BUILDINGS_PATH, JSON.stringify(data, null, 2)); }
 
+const THEMES_PATH = path.join(__dirname, 'data', 'themes.json');
+const DEFAULT_THEMES = [
+  { id: 'weather-news', name: 'ערכת נושא כחול לבן - תחזית וחדשות', description: 'תחזית שבועית וחדשות ישראל היום בפאנל שמאל' },
+  { id: 'ads-focus',    name: 'ערכת נושא כחול לבן - פרסומות מורחב', description: 'פרסומות רחבות ללא פאנל שמאל' },
+  { id: 'vibrant',      name: 'ערכת נושא צבעונית - מודרני', description: 'עיצוב כהה וצבעוני עם אינפוגרפיקות' },
+];
+function readThemes() {
+  if (!fs.existsSync(THEMES_PATH)) return DEFAULT_THEMES;
+  return JSON.parse(fs.readFileSync(THEMES_PATH, 'utf8'));
+}
+function writeThemes(data) { fs.writeFileSync(THEMES_PATH, JSON.stringify(data, null, 2)); }
+
 function readBData(bid, file) {
   const p = bFile(bid, file);
   if (!fs.existsSync(p)) return DEFAULT_DATA[file] ?? null;
@@ -310,6 +322,16 @@ app.get('/api/:bid/building-info', requireBuilding, (req, res) => {
   const b = readBuildings().find(b => b.id === req.params.bid);
   if (!b) return res.status(404).json({ error: 'לא נמצא' });
   res.json({ id: b.id, name: b.name, email: b.email, canManageAds: b.canManageAds, createdAt: b.createdAt });
+});
+
+// --- מנהל-על: ערכות נושא ---
+app.get('/api/superadmin/themes', requireSuper, (req, res) => {
+  res.json(readThemes());
+});
+app.put('/api/superadmin/themes', requireSuper, (req, res) => {
+  if (!Array.isArray(req.body)) return res.status(400).json({ error: 'נדרש מערך' });
+  writeThemes(req.body);
+  res.json({ ok: true });
 });
 
 // --- מנהל-על: ניהול בניינים ---

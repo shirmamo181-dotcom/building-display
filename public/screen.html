@@ -301,8 +301,94 @@
   #mainBody.theme-ads-focus {
     grid-template-columns: 1fr 2.4fr;
   }
-  #mainBody.theme-ads-focus .left-panel {
-    display: none;
+  #mainBody.theme-ads-focus .left-panel { display: none; }
+
+  /* ===== ערכת צבעונית — vibrant ===== */
+  body.theme-vibrant {
+    background: #080b14;
+  }
+  body.theme-vibrant .top-bar {
+    background: linear-gradient(135deg, #0f0820 0%, #1a0a38 50%, #0a1428 100%);
+    border-bottom: 2px solid #7c3aed;
+  }
+  body.theme-vibrant .building-name { color: #e0d4ff; }
+  body.theme-vibrant .pin-icon path { stroke: #a78bfa; }
+  body.theme-vibrant .clock { color: #a78bfa; }
+  body.theme-vibrant .date { color: #7c6fa0; }
+  body.theme-vibrant .update-item {
+    color: #c4b5fd;
+    background: rgba(124,58,237,0.15);
+    border: 1px solid rgba(124,58,237,0.3);
+  }
+  body.theme-vibrant .update-item::before { background: #7c3aed; }
+
+  body.theme-vibrant #mainBody {
+    background: transparent;
+  }
+  body.theme-vibrant .panel {
+    background: #0f1120;
+    border: 1px solid #1e2040;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  body.theme-vibrant .panel-header {
+    background: linear-gradient(135deg, #12103a, #1a1050);
+    border-bottom: 1px solid #2a2060;
+  }
+  body.theme-vibrant .panel-title { color: #c4b5fd; }
+  body.theme-vibrant .panel-header-icon {
+    background: rgba(124,58,237,0.25) !important;
+    font-size: 1rem;
+  }
+
+  /* עסקים — ערכת צבעונית */
+  body.theme-vibrant .biz-item {
+    border-bottom: 1px solid #1a1a40;
+  }
+  body.theme-vibrant .biz-item:nth-child(3n+1) { border-right: 3px solid #7c3aed; }
+  body.theme-vibrant .biz-item:nth-child(3n+2) { border-right: 3px solid #0ea5e9; }
+  body.theme-vibrant .biz-item:nth-child(3n+3) { border-right: 3px solid #10b981; }
+  body.theme-vibrant .biz-name { color: #e2e8f0; }
+  body.theme-vibrant .biz-office {
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    color: #fff;
+  }
+  body.theme-vibrant .biz-desc { color: #64748b; }
+
+  /* פרסומות — ערכת צבעונית */
+  body.theme-vibrant .promo-panel {
+    background: #0a0d1a;
+    border: 1px solid #1e2040;
+  }
+  body.theme-vibrant .promo-contact-bar {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  }
+  body.theme-vibrant .ad-placeholder {
+    background: linear-gradient(135deg, #0f0820, #1a1050);
+    color: #6b5fa0;
+  }
+
+  /* פאנל שמאל — ערכת צבעונית */
+  body.theme-vibrant .weather-section { border-bottom: 1px solid #1a1a40; }
+  body.theme-vibrant .wday {
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  body.theme-vibrant .news-slide-caption {
+    background: linear-gradient(to top, rgba(15,8,32,0.97) 0%, rgba(15,8,32,0.8) 70%, transparent 100%);
+  }
+  body.theme-vibrant .ih-badge { background: #7c3aed; }
+
+  /* רצועת חדשות — ערכת צבעונית */
+  body.theme-vibrant .news-bar {
+    background: linear-gradient(135deg, #0f0820, #1a1050);
+    box-shadow: 0 -3px 20px rgba(124,58,237,0.2);
+  }
+  body.theme-vibrant .news-bar > div:first-child {
+    background: linear-gradient(135deg, #7c3aed, #4f46e5) !important;
+  }
+  body.theme-vibrant .news-item { color: #c4b5fd; }
+  body.theme-vibrant .news-time {
+    background: rgba(124,58,237,0.3);
+    color: #a78bfa;
   }
 
   /* תחזית שבועית */
@@ -636,10 +722,13 @@
   async function loadTheme() {
     try {
       const data = await fetch(`/api/${BID}/theme`).then(r => r.json());
-      const body = document.getElementById('mainBody');
-      body.classList.remove('theme-ads-focus');
-      if (data.theme === 'ads-focus') body.classList.add('theme-ads-focus');
-      // ערכת 'weather-news' היא ברירת המחדל — אין צורך בפעולה
+      const mainBody = document.getElementById('mainBody');
+      // איפוס
+      mainBody.classList.remove('theme-ads-focus');
+      document.body.classList.remove('theme-vibrant');
+      // החלת ערכה
+      if (data.theme === 'ads-focus') mainBody.classList.add('theme-ads-focus');
+      if (data.theme === 'vibrant')   document.body.classList.add('theme-vibrant');
     } catch(e) {}
   }
   loadTheme();
@@ -875,10 +964,11 @@
     }
     function setContent(html) {
       el().innerHTML = html;
-      requestAnimationFrame(() => {
+      setTimeout(() => {
         halfW = el().scrollWidth / 2;
         if (speed < 0) x = -halfW;
-      });
+        else x = 0;
+      }, 80);
     }
     return { start, setContent };
   }

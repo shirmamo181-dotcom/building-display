@@ -157,6 +157,7 @@
 <div class="tabs">
   <div class="tab active" onclick="showTab('buildings',this)">🏢 בניינים</div>
   <div class="tab" onclick="showTab('add',this)">➕ הוספת בניין</div>
+  <div class="tab" onclick="showTab('themes',this)">🎨 ערכות נושא</div>
 </div>
 
 <div class="content">
@@ -166,6 +167,15 @@
     <div class="stats-row" id="statsRow"></div>
     <div class="section-title">כל הבניינים</div>
     <div id="buildingsList"></div>
+  </div>
+
+  <!-- ערכות נושא -->
+  <div class="section" id="section-themes">
+    <div class="section-title">ניהול ערכות נושא</div>
+    <p style="color:#888;font-size:0.9rem;margin-bottom:28px">כאן תוכלי לשנות את שמות ערכות הנושא שיופיעו לבעלי הבניינים בפאנל הניהול שלהם.</p>
+    <div id="themesEditorList"></div>
+    <button class="btn-add" onclick="saveThemes()" style="margin-top:8px">💾 שמור שינויים</button>
+    <div id="themesSaveMsg" style="margin-top:12px;font-size:0.9rem;min-height:20px"></div>
   </div>
 
   <!-- הוספת בניין -->
@@ -242,6 +252,7 @@ function showTab(name, el) {
   el.classList.add('active');
   document.getElementById('section-'+name).classList.add('active');
   if (name === 'buildings') loadBuildings();
+  if (name === 'themes') loadThemesEditor();
 }
 
 async function loadBuildings() {
@@ -407,6 +418,54 @@ async function deleteModalAd(adId) {
   if (!confirm('למחוק פרסומת זו?')) return;
   await fetch('/api/superadmin/buildings/' + currentAdsBid + '/ads/' + adId, { method: 'DELETE' });
   loadModalAds();
+}
+
+// --- ערכות נושא ---
+let themesData = [];
+
+async function loadThemesEditor() {
+  themesData = await fetch('/api/superadmin/themes').then(r => r.json()).catch(() => []);
+  const list = document.getElementById('themesEditorList');
+  list.innerHTML = themesData.map((t, i) => `
+    <div style="background:#1a1a3e;border:1px solid #2a2a5a;border-radius:12px;padding:20px;margin-bottom:14px">
+      <div style="font-size:0.75rem;color:#666;margin-bottom:6px">מזהה: <code style="color:#888">${t.id}</code></div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <label style="font-size:0.78rem;color:#888;display:block;margin-bottom:5px">שם הערכה (מה שרואים בעלי הבניינים)</label>
+          <input type="text" id="tname-${i}" value="${t.name}"
+            style="width:100%;padding:11px 14px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-size:0.95rem;text-align:right;font-family:inherit">
+        </div>
+        <div style="flex:1;min-width:220px">
+          <label style="font-size:0.78rem;color:#888;display:block;margin-bottom:5px">תיאור</label>
+          <input type="text" id="tdesc-${i}" value="${t.description || ''}"
+            style="width:100%;padding:11px 14px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-size:0.95rem;text-align:right;font-family:inherit">
+        </div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('themesSaveMsg').textContent = '';
+}
+
+async function saveThemes() {
+  const updated = themesData.map((t, i) => ({
+    ...t,
+    name:        document.getElementById('tname-'+i)?.value.trim() || t.name,
+    description: document.getElementById('tdesc-'+i)?.value.trim() || t.description,
+  }));
+  const res = await fetch('/api/superadmin/themes', {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(updated)
+  });
+  const msg = document.getElementById('themesSaveMsg');
+  if (res.ok) {
+    themesData = updated;
+    msg.style.color = '#2ecc71';
+    msg.textContent = '✓ השמות עודכנו בהצלחה!';
+  } else {
+    msg.style.color = '#ff6b6b';
+    msg.textContent = 'שגיאה בשמירה';
+  }
+  setTimeout(() => { msg.textContent = ''; }, 4000);
 }
 
 init();

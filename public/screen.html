@@ -311,8 +311,13 @@
   /* סרגל עליון — שחור */
   body.theme-vibrant .top-bar { background: #111; box-shadow: 0 3px 16px rgba(0,0,0,0.4); }
   body.theme-vibrant .building-name svg { color: #fbbf24; }
+  body.theme-vibrant .top-bar-center::before { background: linear-gradient(to left, #111, transparent); }
+  body.theme-vibrant .top-bar-center::after  { background: linear-gradient(to right, #111, transparent); }
   body.theme-vibrant .update-item { color: #fff; background: transparent; border: none; }
-  body.theme-vibrant .update-item::before { content: '●'; background: none; }
+  body.theme-vibrant .update-item::before { content: '●'; color: #fbbf24; background: none; }
+
+  /* אייקון תיק עסקים — צהוב */
+  body.theme-vibrant .panel:not(.left-panel) .panel-header-icon { background: rgba(251,191,36,0.15); color: #fbbf24; }
 
   /* פאנל ישראל היום ללא תמונה — שחור */
   body.theme-vibrant .news-slide-img-placeholder { background: #111 !important; }
@@ -376,7 +381,7 @@
   body.theme-vibrant .news-bar { background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.07); }
   body.theme-vibrant .news-bar > div:first-child { background: #c0001a !important; } /* ynet — אדום */
   body.theme-vibrant .news-item { color: #111; }
-  body.theme-vibrant .news-time { background: #f0f3f8; color: #3a5a8a; }
+  body.theme-vibrant .news-time { background: #fbbf24; color: #111; font-weight: 700; }
   body.theme-vibrant .news-item::before { content: '●'; color: #c0001a; }
 
   /* תחזית שבועית */

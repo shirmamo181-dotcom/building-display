@@ -77,7 +77,7 @@
     direction: rtl;
   }
   .update-item::before {
-    content: '◆';
+    content: '●';
     color: #5bc8f5;
     font-size: 0.6rem;
     flex-shrink: 0;
@@ -304,92 +304,78 @@
   #mainBody.theme-ads-focus .left-panel { display: none; }
 
   /* ===== ערכת צבעונית — vibrant ===== */
-  body.theme-vibrant {
-    background: #080b14;
-  }
+
+  /* רקע לבן, כתב שחור */
+  body.theme-vibrant { background: #f5f7fa; }
+
+  /* סרגל עליון */
   body.theme-vibrant .top-bar {
-    background: linear-gradient(135deg, #0f0820 0%, #1a0a38 50%, #0a1428 100%);
-    border-bottom: 2px solid #7c3aed;
+    background: linear-gradient(135deg, #1a2340, #0d1b3e);
+    border-bottom: 3px solid #1a2340;
   }
-  body.theme-vibrant .building-name { color: #e0d4ff; }
-  body.theme-vibrant .pin-icon path { stroke: #a78bfa; }
-  body.theme-vibrant .clock { color: #a78bfa; }
-  body.theme-vibrant .date { color: #7c6fa0; }
+  body.theme-vibrant .building-name { color: #fff; }
+  body.theme-vibrant .clock { color: #fff; }
+  body.theme-vibrant .date { color: rgba(255,255,255,0.65); }
+  /* עדכוני דיירים — ניקוי רקעי צבע, עיגול במקום מעוין */
   body.theme-vibrant .update-item {
-    color: #c4b5fd;
-    background: rgba(124,58,237,0.15);
-    border: 1px solid rgba(124,58,237,0.3);
-  }
-  body.theme-vibrant .update-item::before { background: #7c3aed; }
-
-  body.theme-vibrant #mainBody {
+    color: #fff;
     background: transparent;
+    border: none;
   }
-  body.theme-vibrant .panel {
-    background: #0f1120;
-    border: 1px solid #1e2040;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-  }
-  body.theme-vibrant .panel-header {
-    background: linear-gradient(135deg, #12103a, #1a1050);
-    border-bottom: 1px solid #2a2060;
-  }
-  body.theme-vibrant .panel-title { color: #c4b5fd; }
-  body.theme-vibrant .panel-header-icon {
-    background: rgba(124,58,237,0.25) !important;
-    font-size: 1rem;
-  }
+  body.theme-vibrant .update-item::before { content: '●'; color: #5bc8f5; background: none; }
 
-  /* עסקים — ערכת צבעונית */
-  body.theme-vibrant .biz-item {
-    border-bottom: 1px solid #1a1a40;
+  /* כרטיסים */
+  body.theme-vibrant .panel {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
   }
-  body.theme-vibrant .biz-item:nth-child(3n+1) { border-right: 3px solid #7c3aed; }
-  body.theme-vibrant .biz-item:nth-child(3n+2) { border-right: 3px solid #0ea5e9; }
-  body.theme-vibrant .biz-item:nth-child(3n+3) { border-right: 3px solid #10b981; }
-  body.theme-vibrant .biz-name { color: #e2e8f0; }
+  body.theme-vibrant .panel-header { background: #f8faff; border-bottom: 1px solid #e8eef8; }
+  body.theme-vibrant .panel-title { color: #1a2340; }
+
+  /* עסקים — כפתורים שחור/לבן לסירוגין, ללא גבולות צבעוניים */
+  body.theme-vibrant .biz-item { border-bottom: 1px solid #f0f3f8; border-right: none !important; }
+  body.theme-vibrant .biz-name { color: #1a2340; }
+  body.theme-vibrant .biz-desc { color: #6b7c9a; }
   body.theme-vibrant .biz-office {
-    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    background: #1a2340;
     color: #fff;
   }
-  body.theme-vibrant .biz-desc { color: #64748b; }
-
-  /* פרסומות — ערכת צבעונית */
-  body.theme-vibrant .promo-panel {
-    background: #0a0d1a;
-    border: 1px solid #1e2040;
+  body.theme-vibrant .biz-item.alt .biz-office {
+    background: #fff;
+    color: #1a2340;
+    border: 1.5px solid #1a2340;
   }
+
+  /* פרסומות — עוברות לשמאל, תחזית+חדשות לאמצע */
+  body.theme-vibrant .promo-panel { order: 3; background: #fff; border: 1px solid #e2e8f0; }
+  body.theme-vibrant .left-panel  { order: 2; }
   body.theme-vibrant .promo-contact-bar {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  }
-  body.theme-vibrant .ad-placeholder {
-    background: linear-gradient(135deg, #0f0820, #1a1050);
-    color: #6b5fa0;
+    background: #1a2340;
+    color: #fff;
   }
 
-  /* פאנל שמאל — ערכת צבעונית */
-  body.theme-vibrant .weather-section { border-bottom: 1px solid #1a1a40; }
-  body.theme-vibrant .wday {
-    border: 1px solid rgba(255,255,255,0.06);
-  }
-  body.theme-vibrant .news-slide-caption {
-    background: linear-gradient(to top, rgba(15,8,32,0.97) 0%, rgba(15,8,32,0.8) 70%, transparent 100%);
-  }
-  body.theme-vibrant .ih-badge { background: #7c3aed; }
+  /* תחזית */
+  body.theme-vibrant .weather-section { border-bottom: 1px solid #e8eef8; }
 
-  /* רצועת חדשות — ערכת צבעונית */
-  body.theme-vibrant .news-bar {
-    background: linear-gradient(135deg, #0f0820, #1a1050);
-    box-shadow: 0 -3px 20px rgba(124,58,237,0.2);
+  /* כותרת ישראל היום — צבעי הלוגו המקורי */
+  body.theme-vibrant .ih-logo {
+    background: #d62b2b;   /* אדום ישראל היום */
+    color: #fff;
   }
+  body.theme-vibrant .ih-badge { background: #d62b2b; }
+  body.theme-vibrant .news-section-title { color: #1a2340; }
+
+  /* רצועת ynet — צבעי הלוגו המקורי */
+  body.theme-vibrant .news-bar { background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.08); }
   body.theme-vibrant .news-bar > div:first-child {
-    background: linear-gradient(135deg, #7c3aed, #4f46e5) !important;
+    background: #c0001a !important;  /* אדום ynet */
   }
-  body.theme-vibrant .news-item { color: #c4b5fd; }
-  body.theme-vibrant .news-time {
-    background: rgba(124,58,237,0.3);
-    color: #a78bfa;
-  }
+  body.theme-vibrant .news-item { color: #1a2340; }
+  body.theme-vibrant .news-time { background: #f0f3f8; color: #3a5a8a; }
+
+  /* עיגול במקום מעוין ב-ynet */
+  body.theme-vibrant .news-item::before { content: '●'; color: #c0001a; }
 
   /* תחזית שבועית */
   .weather-section {
@@ -597,7 +583,7 @@
     will-change: transform;
   }
   .news-item { display: inline-flex; align-items: center; gap: 8px; margin-right: 60px; direction: rtl; }
-  .news-item::before { content: '◆'; color: #5bc8f5; font-size: 0.6rem; flex-shrink: 0; }
+  .news-item::before { content: '●'; color: #5bc8f5; font-size: 0.6rem; flex-shrink: 0; }
   .news-time {
     background: rgba(91,200,245,0.12);
     color: #5bc8f5;
@@ -667,7 +653,7 @@
       <div id="adSlides"></div>
     </div>
     <div class="ad-dots" id="adDots"></div>
-    <div class="promo-contact-bar">לפרסום העסק שלכם על מסך הבניין ◆ 052-6060848</div>
+    <div class="promo-contact-bar">לפרסום העסק שלכם על מסך הבניין ● 052-6060848</div>
   </div>
 
   <!-- פאנל שמאל: תחזית + חדשות -->

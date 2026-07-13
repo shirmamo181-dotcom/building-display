@@ -312,9 +312,9 @@
   body.theme-vibrant .update-item { color: #fff; background: transparent; border: none; }
   body.theme-vibrant .update-item::before { content: '●'; background: none; }
 
-  /* עמודות: DOM manipulation קובע את הסדר (applyTheme) — ראשון=ימין, שני=אמצע, שלישי=שמאל ב-RTL */
+  /* עמודות: DOM=[עסקים,תחזית,פרסומות] → RTL: ימין,אמצע,שמאל. col3(שמאל)=פרסומות → רחב */
   body.theme-vibrant #mainBody {
-    grid-template-columns: 1fr 1.5fr 1.1fr;
+    grid-template-columns: 1fr 1.2fr 1.85fr;
   }
 
   /* פאנלים לבנים, כתב שחור */
@@ -323,16 +323,25 @@
   body.theme-vibrant .panel-title { color: #111; }
 
   /* עסקים — ללא גבולות צבעוניים */
-  body.theme-vibrant .biz-item { border-bottom: 1px solid #f0f3f8; border-right: none !important; }
-  body.theme-vibrant .biz-item.alt { background: #f9fafb; }
+  body.theme-vibrant .biz-item { border-bottom: 1px solid #f0f3f8; border-right: none !important; background: #fff; }
+  body.theme-vibrant .biz-item.alt { background: #f5f5f5; }
   body.theme-vibrant .biz-name { color: #111; }
   body.theme-vibrant .biz-desc { color: #6b7c9a; }
-  /* כפתורים: אי-זוגי = שחור/לבן, זוגי = לבן/שחור */
+  /* תגי חדר ומשרד: שורות אי-זוגיות שחור/לבן, זוגיות לבן/שחור */
+  body.theme-vibrant .biz-room { background: #111 !important; color: #fff !important; }
+  body.theme-vibrant .biz-item.alt .biz-room { background: #fff !important; color: #111 !important; border: 1.5px solid #111 !important; }
   body.theme-vibrant .biz-office { background: #111; color: #fff; border: none; }
   body.theme-vibrant .biz-item.alt .biz-office { background: #fff; color: #111; border: 1.5px solid #111; }
 
-  /* פרסומות */
+  /* פרסומות — לבן, ללא רקע כהה */
   body.theme-vibrant .promo-panel { background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 14px rgba(0,0,0,0.07); }
+  body.theme-vibrant .no-ads { background: #fff !important; }
+  body.theme-vibrant .no-ads-label { color: #999; }
+  body.theme-vibrant .no-ads-main { color: #111; font-weight: 300; }
+  body.theme-vibrant .no-ads-phone { color: #111; background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); letter-spacing: 1.5px; }
+  body.theme-vibrant .no-ads-sub { color: rgba(0,0,0,0.35); }
+  body.theme-vibrant .ad-dot { background: rgba(0,0,0,0.15); }
+  body.theme-vibrant .ad-dot.active { background: #111; }
   body.theme-vibrant .promo-contact-bar { background: #111; color: #fff; }
 
   /* כותרות מדיה — צבעי לוגו מקוריים */

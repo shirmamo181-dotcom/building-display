@@ -174,6 +174,7 @@
     <div class="tab" onclick="showTab('businesses',this)">🏪 עסקים</div>
     <div class="tab" id="adsTab" onclick="showTab('ads',this)">📢 פרסומות</div>
     <div class="tab" onclick="showTab('updates',this)">📋 עדכונים</div>
+    <div class="tab" onclick="showTab('theme',this)">🎨 ערכת נושא</div>
   </div>
 
   <div class="content">
@@ -235,6 +236,39 @@
       <div id="adList"></div>
     </div>
 
+    <!-- ערכת נושא -->
+    <div class="section" id="section-theme">
+      <div class="section-title">ערכת נושא למסך התצוגה</div>
+      <p style="color:#888;font-size:0.9rem;margin-bottom:24px">בחר את הפריסה שתופיע על מסך הבניין. השינוי נכנס לתוקף תוך שניות.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:600px" id="themeCards">
+
+        <!-- ערכת תחזית וחדשות -->
+        <div class="theme-card" id="theme-weather-news" onclick="selectTheme('weather-news')">
+          <div class="theme-preview" style="background:linear-gradient(135deg,#e8f4fd,#f0f8ff)">
+            <div style="display:flex;gap:6px;align-items:flex-end">
+              <div style="width:28px;height:50px;border-radius:6px;background:linear-gradient(#ffe57a,#ffb300)"></div>
+              <div style="width:28px;height:60px;border-radius:6px;background:linear-gradient(#b8daf5,#7ab2d8)"></div>
+              <div style="width:28px;height:45px;border-radius:6px;background:linear-gradient(#c8d0dc,#9aa8b8)"></div>
+              <div style="width:28px;height:40px;border-radius:6px;background:linear-gradient(#6a9fd8,#3a6aaa)"></div>
+            </div>
+            <span style="color:#1a2340;margin-top:4px">☀️ תחזית + 📰 חדשות</span>
+          </div>
+          <div class="theme-name">ערכת תחזית וחדשות</div>
+        </div>
+
+        <!-- ערכת פרסומות מורחבת -->
+        <div class="theme-card" id="theme-ads-focus" onclick="selectTheme('ads-focus')">
+          <div class="theme-preview" style="background:linear-gradient(135deg,#1a1a3e,#2d2d6b)">
+            <div style="width:80px;height:55px;border-radius:8px;background:linear-gradient(135deg,#4a4aff,#7a7aff);display:flex;align-items:center;justify-content:center;font-size:1.6rem">📢</div>
+            <span style="color:#a0a0ff;margin-top:6px">פרסומות במסך רחב</span>
+          </div>
+          <div class="theme-name">ערכת פרסומות מורחבת</div>
+        </div>
+
+      </div>
+      <div id="themeMsg" style="margin-top:18px;font-size:0.9rem;min-height:20px"></div>
+    </div>
+
     <!-- עדכונים -->
     <div class="section" id="section-updates">
       <div class="section-title">עדכוני בניין</div>
@@ -275,7 +309,7 @@ function showTab(name, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('section-' + name).classList.add('active');
-  if (name === 'themes') loadThemes();
+  if (name === 'theme') loadThemeTab();
   if (name === 'ads') loadAds();
 }
 
@@ -562,34 +596,28 @@ async function reorderUpdate(id, direction) {
 }
 
 // --- ערכות נושא ---
-const THEMES = [
-  { id: 'wood',     name: 'עץ יוקרתי',  bg: 'linear-gradient(135deg,#3b1e0a,#1c1208)', accent: '#c9a257', text: '#ede0cc' },
-  { id: 'navy',     name: 'כחול עמוק',   bg: 'linear-gradient(135deg,#0d2a4a,#020810)', accent: '#7eb8d4', text: '#ddeeff' },
-  { id: 'white',    name: 'מינימל בהיר', bg: 'linear-gradient(135deg,#e8edf8,#dfe5f5)', accent: '#1a3a6e', text: '#1a2340' },
-  { id: 'green',    name: 'ירוק יוקרתי', bg: 'linear-gradient(135deg,#0d3320,#030d06)', accent: '#c9a257', text: '#d8ede0' },
-  { id: 'charcoal', name: 'אפור מודרני', bg: 'linear-gradient(135deg,#1c1c1c,#0e0e0e)', accent: '#e0e0e0', text: '#f0f0f0' },
-];
-
-async function loadThemes() {
-  const { theme: cur } = await fetch('/api/' + BID + '/theme').then(r => r.json()).catch(() => ({ theme: 'wood' }));
-  document.getElementById('themeGrid').innerHTML = THEMES.map(t => `
-    <div class="theme-card ${t.id === cur ? 'active' : ''}" onclick="setTheme('${t.id}')">
-      <div class="theme-preview" style="background:${t.bg}">
-        <div style="width:60%;height:8px;border-radius:4px;background:${t.accent};opacity:0.8"></div>
-        <span style="color:${t.text}">◈ ${t.name}</span>
-        <div style="width:40%;height:4px;border-radius:4px;background:${t.accent};opacity:0.4"></div>
-      </div>
-      <div class="theme-name">${t.name}${t.id === cur ? ' ✓' : ''}</div>
-    </div>
-  `).join('');
+async function loadThemeTab() {
+  const { theme: cur } = await fetch('/api/' + BID + '/theme').then(r => r.json()).catch(() => ({ theme: 'weather-news' }));
+  applyThemeSelection(cur);
 }
 
-async function setTheme(id) {
+function applyThemeSelection(cur) {
+  document.querySelectorAll('#themeCards .theme-card').forEach(card => {
+    const id = card.id.replace('theme-', '');
+    card.classList.toggle('active', id === cur);
+  });
+}
+
+async function selectTheme(id) {
   await fetch('/api/' + BID + '/theme', {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ theme: id })
   });
-  loadThemes();
+  applyThemeSelection(id);
+  const msg = document.getElementById('themeMsg');
+  msg.style.color = '#2ecc71';
+  msg.textContent = '✓ ערכת הנושא עודכנה! המסך יתרענן תוך שניות.';
+  setTimeout(() => { msg.textContent = ''; }, 4000);
 }
 
 init();

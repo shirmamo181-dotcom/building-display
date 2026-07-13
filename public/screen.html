@@ -297,6 +297,14 @@
   /* ===== פאנל שמאל (תחזית + חדשות) ===== */
   .left-panel { display: flex; flex-direction: column; gap: 0; overflow: hidden; }
 
+  /* ===== ערכת פרסומות מורחבת ===== */
+  #mainBody.theme-ads-focus {
+    grid-template-columns: 1fr 2.4fr;
+  }
+  #mainBody.theme-ads-focus .left-panel {
+    display: none;
+  }
+
   /* תחזית שבועית */
   .weather-section {
     flex: 0 0 auto;
@@ -542,7 +550,7 @@
 </div>
 
 <!-- גוף ראשי -->
-<div class="main-body">
+<div class="main-body" id="mainBody">
 
   <!-- עסקים -->
   <div class="panel">
@@ -626,8 +634,15 @@
 
   // ערכת נושא (שמורה לתאימות אחורה — לא משפיעה על עיצוב חדש)
   async function loadTheme() {
-    // העיצוב החדש לא תלוי בערכת נושא
+    try {
+      const data = await fetch(`/api/${BID}/theme`).then(r => r.json());
+      const body = document.getElementById('mainBody');
+      body.classList.remove('theme-ads-focus');
+      if (data.theme === 'ads-focus') body.classList.add('theme-ads-focus');
+      // ערכת 'weather-news' היא ברירת המחדל — אין צורך בפעולה
+    } catch(e) {}
   }
+  loadTheme();
 
   // שעון ותאריך
   const DAYS   = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];

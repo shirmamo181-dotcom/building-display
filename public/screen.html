@@ -312,13 +312,10 @@
   body.theme-vibrant .update-item { color: #fff; background: transparent; border: none; }
   body.theme-vibrant .update-item::before { content: '●'; background: none; }
 
-  /* עמודות: ימין=עסקים(col3), אמצע=תחזית+חדשות(col2), שמאל=פרסומות(col1) */
+  /* עמודות: DOM manipulation קובע את הסדר (applyTheme) — ראשון=ימין, שני=אמצע, שלישי=שמאל ב-RTL */
   body.theme-vibrant #mainBody {
-    grid-template-columns: 1.1fr 1.5fr 1fr;
+    grid-template-columns: 1fr 1.5fr 1.1fr;
   }
-  body.theme-vibrant #mainBody > .panel:not(.left-panel) { grid-column: 3; } /* עסקים → ימין */
-  body.theme-vibrant #mainBody > .promo-panel            { grid-column: 1; } /* פרסומות → שמאל */
-  body.theme-vibrant #mainBody > .left-panel             { grid-column: 2; } /* תחזית → אמצע */
 
   /* פאנלים לבנים, כתב שחור */
   body.theme-vibrant .panel { background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 14px rgba(0,0,0,0.07); }

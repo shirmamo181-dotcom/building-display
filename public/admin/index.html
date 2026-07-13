@@ -240,7 +240,7 @@
     <div class="section" id="section-theme">
       <div class="section-title">ערכת נושא למסך התצוגה</div>
       <p style="color:#888;font-size:0.9rem;margin-bottom:24px">בחר את הפריסה שתופיע על מסך הבניין. השינוי נכנס לתוקף תוך שניות.</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;max-width:860px" id="themeCards">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:860px" id="themeCards">
 
         <!-- ערכת תחזית וחדשות -->
         <div class="theme-card" id="theme-weather-news" onclick="selectTheme('weather-news')">
@@ -265,18 +265,35 @@
           <div class="theme-name" id="label-ads-focus">ערכת נושא כחול לבן - פרסומות מורחב</div>
         </div>
 
-        <!-- ערכת צבעונית -->
+        <!-- ערכת שחור לבן - תחזית וחדשות -->
         <div class="theme-card" id="theme-vibrant" onclick="selectTheme('vibrant')">
-          <div class="theme-preview" style="background:linear-gradient(135deg,#0f0820,#1a1050)">
-            <div style="display:flex;gap:6px">
-              <div style="width:18px;height:48px;border-radius:5px;background:linear-gradient(#7c3aed,#4f46e5)"></div>
-              <div style="width:18px;height:60px;border-radius:5px;background:linear-gradient(#0ea5e9,#0284c7)"></div>
-              <div style="width:18px;height:40px;border-radius:5px;background:linear-gradient(#10b981,#059669)"></div>
-              <div style="width:18px;height:52px;border-radius:5px;background:linear-gradient(#f59e0b,#d97706)"></div>
+          <div class="theme-preview" style="background:#111">
+            <div style="display:flex;gap:5px;align-items:flex-end">
+              <div style="width:18px;height:44px;border-radius:5px;background:#fff"></div>
+              <div style="width:30px;height:58px;border-radius:5px;background:#222;border:1px solid #444;display:flex;align-items:center;justify-content:center;font-size:0.9rem">☀️</div>
+              <div style="width:18px;height:44px;border-radius:5px;background:#333"></div>
             </div>
-            <span style="color:#c4b5fd;margin-top:5px;font-size:0.7rem">🎨 מודרני וצבעוני</span>
+            <div style="display:flex;gap:4px;margin-top:6px;align-items:center">
+              <div style="width:8px;height:8px;border-radius:50%;background:#fbbf24"></div>
+              <span style="color:#fff;font-size:0.7rem">שחור לבן + תחזית וחדשות</span>
+            </div>
           </div>
-          <div class="theme-name" id="label-vibrant">ערכת נושא צבעונית - מודרני</div>
+          <div class="theme-name" id="label-vibrant">ערכת נושא שחור לבן - תחזית וחדשות</div>
+        </div>
+
+        <!-- ערכת שחור לבן - פרסומות מורחב -->
+        <div class="theme-card" id="theme-vibrant-ads" onclick="selectTheme('vibrant-ads')">
+          <div class="theme-preview" style="background:#111">
+            <div style="display:flex;gap:5px;align-items:flex-end">
+              <div style="width:62px;height:54px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:1.3rem">📢</div>
+              <div style="width:18px;height:42px;border-radius:5px;background:#333"></div>
+            </div>
+            <div style="display:flex;gap:4px;margin-top:6px;align-items:center">
+              <div style="width:8px;height:8px;border-radius:50%;background:#fbbf24"></div>
+              <span style="color:#fff;font-size:0.7rem">שחור לבן + פרסומות מורחב</span>
+            </div>
+          </div>
+          <div class="theme-name" id="label-vibrant-ads">ערכת נושא שחור לבן - פרסומות מורחב</div>
         </div>
 
       </div>

@@ -297,11 +297,44 @@
   /* ===== פאנל שמאל (תחזית + חדשות) ===== */
   .left-panel { display: flex; flex-direction: column; gap: 0; overflow: hidden; }
 
-  /* ===== ערכת פרסומות מורחבת ===== */
+  /* ===== ערכת כחול לבן - פרסומות מורחבת ===== */
   #mainBody.theme-ads-focus {
     grid-template-columns: 1fr 2.4fr;
   }
   #mainBody.theme-ads-focus .left-panel { display: none; }
+
+  /* ===== ערכת שחור לבן - פרסומות מורחבת ===== */
+  body.theme-vibrant-ads .top-bar { background: #111; box-shadow: 0 3px 16px rgba(0,0,0,0.4); }
+  body.theme-vibrant-ads .building-name svg { color: #fbbf24; }
+  body.theme-vibrant-ads .top-bar-center::before { background: linear-gradient(to left, #111, transparent); }
+  body.theme-vibrant-ads .top-bar-center::after  { background: linear-gradient(to right, #111, transparent); }
+  body.theme-vibrant-ads .update-item { color: #fff; background: transparent; border: none; }
+  body.theme-vibrant-ads .update-item::before { content: '●'; color: #fbbf24; background: none; }
+  body.theme-vibrant-ads #mainBody { grid-template-columns: 1fr 2.4fr; }
+  body.theme-vibrant-ads #mainBody .left-panel { display: none; }
+  body.theme-vibrant-ads .panel { background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 14px rgba(0,0,0,0.07); }
+  body.theme-vibrant-ads .panel-header { background: #f8f9fc; border-bottom: 1px solid #e8eef8; }
+  body.theme-vibrant-ads .panel-title { color: #111; }
+  body.theme-vibrant-ads .panel:not(.left-panel) .panel-header-icon { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  body.theme-vibrant-ads .biz-item { border-bottom: 1px solid #f0f3f8; border-right: none !important; background: #fff; }
+  body.theme-vibrant-ads .biz-item.alt { background: #f5f5f5; }
+  body.theme-vibrant-ads .biz-name { color: #111; }
+  body.theme-vibrant-ads .biz-desc { color: #6b7c9a; }
+  body.theme-vibrant-ads .biz-room { background: #111 !important; color: #fff !important; }
+  body.theme-vibrant-ads .biz-item.alt .biz-room { background: #fff !important; color: #111 !important; border: 1.5px solid #111 !important; }
+  body.theme-vibrant-ads .biz-office { background: #111; color: #fff; border: none; }
+  body.theme-vibrant-ads .biz-item.alt .biz-office { background: #fff; color: #111; border: 1.5px solid #111; }
+  body.theme-vibrant-ads .promo-panel { background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 14px rgba(0,0,0,0.07); }
+  body.theme-vibrant-ads .no-ads { background: #fff !important; }
+  body.theme-vibrant-ads .no-ads-label { color: #999; }
+  body.theme-vibrant-ads .no-ads-main { color: #111; font-weight: 300; }
+  body.theme-vibrant-ads .no-ads-phone { color: #111; background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); }
+  body.theme-vibrant-ads .no-ads-sub { color: rgba(0,0,0,0.35); }
+  body.theme-vibrant-ads .ad-dot { background: rgba(0,0,0,0.15); }
+  body.theme-vibrant-ads .ad-dot.active { background: #111; }
+  body.theme-vibrant-ads .promo-contact-bar { background: #111; color: #fff; }
+  body.theme-vibrant-ads .news-time { background: #fbbf24; color: #111; font-weight: 700; }
+  body.theme-vibrant-ads .news-item::before { content: '●'; color: #fbbf24; }
 
   /* ===== ערכת צבעונית — vibrant ===== */
 
@@ -733,6 +766,7 @@
     // איפוס CSS
     mainBody.classList.remove('theme-ads-focus');
     document.body.classList.remove('theme-vibrant');
+    document.body.classList.remove('theme-vibrant-ads');
 
     // סדר ברירת מחדל: עסקים | פרסומות | תחזית
     mainBody.append(biz, ads, weather);
@@ -742,8 +776,9 @@
     } else if (theme === 'vibrant') {
       document.body.classList.add('theme-vibrant');
       // סדר ל-vibrant: עסקים | תחזית | פרסומות
-      // ב-RTL grid: ראשון=ימין, שני=אמצע, שלישי=שמאל
       mainBody.append(biz, weather, ads);
+    } else if (theme === 'vibrant-ads') {
+      document.body.classList.add('theme-vibrant-ads');
     }
   }
 

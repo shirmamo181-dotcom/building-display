@@ -675,20 +675,44 @@
   loadBuildingName();
   setInterval(loadBuildingName, 30000);
 
-  // ערכת נושא (שמורה לתאימות אחורה — לא משפיעה על עיצוב חדש)
+  // ערכת נושא
+  let currentTheme = null;
+
   async function loadTheme() {
     try {
       const data = await fetch(`/api/${BID}/theme`).then(r => r.json());
-      const mainBody = document.getElementById('mainBody');
-      // איפוס
-      mainBody.classList.remove('theme-ads-focus');
-      document.body.classList.remove('theme-vibrant');
-      // החלת ערכה
-      if (data.theme === 'ads-focus') mainBody.classList.add('theme-ads-focus');
-      if (data.theme === 'vibrant')   document.body.classList.add('theme-vibrant');
+      const theme = data.theme || 'weather-news';
+      if (theme === currentTheme) return; // אין שינוי
+      currentTheme = theme;
+      applyTheme(theme);
     } catch(e) {}
   }
+
+  function applyTheme(theme) {
+    const mainBody = document.getElementById('mainBody');
+    const biz     = mainBody.querySelector('.panel:not(.left-panel)');
+    const ads     = mainBody.querySelector('.promo-panel');
+    const weather = mainBody.querySelector('.left-panel');
+
+    // איפוס CSS
+    mainBody.classList.remove('theme-ads-focus');
+    document.body.classList.remove('theme-vibrant');
+
+    // סדר ברירת מחדל: עסקים | פרסומות | תחזית
+    mainBody.append(biz, ads, weather);
+
+    if (theme === 'ads-focus') {
+      mainBody.classList.add('theme-ads-focus');
+    } else if (theme === 'vibrant') {
+      document.body.classList.add('theme-vibrant');
+      // סדר ל-vibrant: עסקים | תחזית | פרסומות
+      // ב-RTL grid: ראשון=ימין, שני=אמצע, שלישי=שמאל
+      mainBody.append(biz, weather, ads);
+    }
+  }
+
   loadTheme();
+  setInterval(loadTheme, 30000); // בדיקה כל 30 שניות
 
   // שעון ותאריך
   const DAYS   = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];

@@ -69,7 +69,36 @@ async function initDB() {
       description TEXT DEFAULT '',
       sort_order  INTEGER DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS global_ads (
+      id               BIGINT PRIMARY KEY,
+      title            TEXT DEFAULT '',
+      type             TEXT DEFAULT 'image',
+      url              TEXT NOT NULL DEFAULT '',
+      duration         INTEGER DEFAULT 6,
+      active           BOOLEAN DEFAULT true,
+      start_date       DATE,
+      end_date         DATE,
+      advertiser_name  TEXT DEFAULT '',
+      advertiser_phone TEXT DEFAULT '',
+      advertiser_email TEXT DEFAULT '',
+      created_at       DATE DEFAULT CURRENT_DATE
+    );
+    CREATE TABLE IF NOT EXISTS global_ad_buildings (
+      id           BIGINT PRIMARY KEY,
+      global_ad_id BIGINT REFERENCES global_ads(id) ON DELETE CASCADE,
+      building_id  TEXT REFERENCES buildings(id) ON DELETE CASCADE,
+      sort_order   INTEGER DEFAULT 999,
+      active       BOOLEAN DEFAULT true,
+      UNIQUE(global_ad_id, building_id)
+    );
   `);
+
+  // Migrate ads table
+  const adsCols = ['sort_order INTEGER DEFAULT 999','start_date DATE','end_date DATE',
+    "advertiser_name TEXT DEFAULT ''","advertiser_phone TEXT DEFAULT ''","advertiser_email TEXT DEFAULT ''"];
+  for (const col of adsCols) {
+    try { await pool.query(`ALTER TABLE ads ADD COLUMN IF NOT EXISTS ${col}`); } catch(e) {}
+  }
 
   // Default themes
   await pool.query(`
@@ -224,8 +253,24 @@ app.get('/api/:bid/theme', async (req, res) => {
   res.json({ theme: rows[0]?.theme || 'weather-news' });
 });
 app.get('/api/:bid/ads', async (req, res) => {
-  const { rows } = await pool.query('SELECT * FROM ads WHERE building_id=$1 AND active=true ORDER BY id', [req.params.bid]);
-  res.json(rows.map(r => ({ id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration })));
+  const bid = req.params.bid;
+  const today = new Date().toISOString().split('T')[0];
+  const { rows: local } = await pool.query(
+    `SELECT id, title, type, url, duration, sort_order FROM ads
+     WHERE building_id=$1 AND active=true
+     AND (start_date IS NULL OR start_date <= $2)
+     AND (end_date IS NULL OR end_date >= $2)
+     ORDER BY sort_order, id`, [bid, today]);
+  const { rows: global } = await pool.query(
+    `SELECT ga.id, ga.title, ga.type, ga.url, ga.duration, gab.sort_order
+     FROM global_ads ga
+     JOIN global_ad_buildings gab ON gab.global_ad_id=ga.id AND gab.building_id=$1
+     WHERE ga.active=true AND gab.active=true
+     AND (ga.start_date IS NULL OR ga.start_date <= $2)
+     AND (ga.end_date IS NULL OR ga.end_date >= $2)
+     ORDER BY gab.sort_order, ga.id`, [bid, today]);
+  const merged = [...local, ...global].sort((a,b) => (a.sort_order||999)-(b.sort_order||999));
+  res.json(merged.map(r => ({ id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration })));
 });
 
 // --- עסקים ---
@@ -285,27 +330,61 @@ app.post('/api/:bid/updates/reorder', requireBuilding, async (req, res) => {
 
 // --- פרסומות ---
 app.get('/api/:bid/ads/all', requireBuilding, async (req, res) => {
-  const { rows } = await pool.query('SELECT * FROM ads WHERE building_id=$1 ORDER BY id', [req.params.bid]);
-  res.json(rows.map(r => ({ id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration, active: r.active })));
+  const bid = req.params.bid;
+  const { rows: local } = await pool.query(
+    'SELECT *, false AS is_global FROM ads WHERE building_id=$1 ORDER BY sort_order, id', [bid]);
+  const { rows: global } = await pool.query(
+    `SELECT ga.*, true AS is_global, gab.sort_order AS gab_sort, gab.active AS gab_active
+     FROM global_ads ga
+     JOIN global_ad_buildings gab ON gab.global_ad_id=ga.id AND gab.building_id=$1
+     ORDER BY gab.sort_order, ga.id`, [bid]);
+  const localMapped = local.map(r => ({
+    id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration,
+    active: r.active, sort_order: r.sort_order,
+    start_date: r.start_date, end_date: r.end_date,
+    advertiser_name: r.advertiser_name, advertiser_phone: r.advertiser_phone, advertiser_email: r.advertiser_email,
+    is_global: false
+  }));
+  const globalMapped = global.map(r => ({
+    id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration,
+    active: r.gab_active, sort_order: r.gab_sort,
+    start_date: r.start_date, end_date: r.end_date,
+    advertiser_name: r.advertiser_name, advertiser_phone: r.advertiser_phone, advertiser_email: r.advertiser_email,
+    is_global: true
+  }));
+  res.json([...localMapped, ...globalMapped].sort((a,b) => (a.sort_order||999)-(b.sort_order||999)));
 });
 app.post('/api/:bid/ads', requireAdsAuth, upload.single('file'), async (req, res) => {
   const id  = Date.now();
   const url = req.file ? (req.file.secure_url || req.file.path || '') : (req.body.url || '');
   const { rows } = await pool.query(
-    'INSERT INTO ads (id, building_id, title, type, url, duration, active) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',
-    [id, req.params.bid, req.body.title || '', req.body.type || 'image', url, parseInt(req.body.duration) || 6, true]
+    `INSERT INTO ads (id, building_id, title, type, url, duration, active, start_date, end_date, advertiser_name, advertiser_phone, advertiser_email)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+    [id, req.params.bid, req.body.title || '', req.body.type || 'image', url, parseInt(req.body.duration) || 6, true,
+     req.body.start_date || null, req.body.end_date || null,
+     req.body.advertiser_name || '', req.body.advertiser_phone || '', req.body.advertiser_email || '']
   );
-  res.json({ id: rows[0].id, title: rows[0].title, type: rows[0].type, url: rows[0].url, duration: rows[0].duration, active: rows[0].active });
+  const r = rows[0];
+  res.json({ id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration, active: r.active });
 });
 app.put('/api/:bid/ads/:id', requireAdsAuth, async (req, res) => {
-  await pool.query(
-    'UPDATE ads SET active=$1 WHERE id=$2 AND building_id=$3',
-    [req.body.active === 'true', req.params.id, req.params.bid]
-  );
+  await pool.query('UPDATE ads SET active=$1 WHERE id=$2 AND building_id=$3',
+    [req.body.active === 'true', req.params.id, req.params.bid]);
   res.json({ ok: true });
 });
 app.delete('/api/:bid/ads/:id', requireAdsAuth, async (req, res) => {
   await pool.query('DELETE FROM ads WHERE id=$1 AND building_id=$2', [req.params.id, req.params.bid]);
+  res.json({ ok: true });
+});
+app.post('/api/:bid/ads/reorder', requireAdsAuth, async (req, res) => {
+  const { id, direction } = req.body;
+  const { rows } = await pool.query('SELECT * FROM ads WHERE building_id=$1 ORDER BY sort_order, id', [req.params.bid]);
+  const idx = rows.findIndex(a => a.id == id);
+  if (idx === -1) return res.json({ ok: false });
+  const ni = direction === 'up' ? idx - 1 : idx + 1;
+  if (ni < 0 || ni >= rows.length) return res.json({ ok: false });
+  await pool.query('UPDATE ads SET sort_order=$1 WHERE id=$2', [ni, rows[idx].id]);
+  await pool.query('UPDATE ads SET sort_order=$1 WHERE id=$2', [idx, rows[ni].id]);
   res.json({ ok: true });
 });
 
@@ -405,19 +484,42 @@ app.post('/api/superadmin/buildings/:id/toggle-ads', requireSuper, async (req, r
   res.json({ ok: true });
 });
 
-// מנהל-על: ניהול פרסומות
+// מנהל-על: ניהול פרסומות בניין
 app.get('/api/superadmin/buildings/:id/ads', requireSuper, async (req, res) => {
-  const { rows } = await pool.query('SELECT * FROM ads WHERE building_id=$1 ORDER BY id', [req.params.id]);
-  res.json(rows.map(r => ({ id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration, active: r.active })));
+  const bid = req.params.id;
+  const { rows: local } = await pool.query(
+    'SELECT * FROM ads WHERE building_id=$1 ORDER BY sort_order, id', [bid]);
+  const { rows: global } = await pool.query(
+    `SELECT ga.*, gab.sort_order AS gab_sort, gab.active AS gab_active, gab.id AS gab_id
+     FROM global_ads ga
+     JOIN global_ad_buildings gab ON gab.global_ad_id=ga.id AND gab.building_id=$1
+     ORDER BY gab.sort_order, ga.id`, [bid]);
+  const localMapped = local.map(r => ({
+    id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration, active: r.active,
+    sort_order: r.sort_order, start_date: r.start_date, end_date: r.end_date,
+    advertiser_name: r.advertiser_name, advertiser_phone: r.advertiser_phone, advertiser_email: r.advertiser_email,
+    is_global: false
+  }));
+  const globalMapped = global.map(r => ({
+    id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration, active: r.gab_active,
+    sort_order: r.gab_sort, start_date: r.start_date, end_date: r.end_date,
+    advertiser_name: r.advertiser_name, advertiser_phone: r.advertiser_phone, advertiser_email: r.advertiser_email,
+    is_global: true, gab_id: r.gab_id
+  }));
+  res.json([...localMapped, ...globalMapped].sort((a,b) => (a.sort_order||999)-(b.sort_order||999)));
 });
 app.post('/api/superadmin/buildings/:id/ads', requireSuper, upload.single('file'), async (req, res) => {
   const id  = Date.now();
   const url = req.file ? (req.file.secure_url || req.file.path || '') : (req.body.url || '');
   const { rows } = await pool.query(
-    'INSERT INTO ads (id, building_id, title, type, url, duration, active) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',
-    [id, req.params.id, req.body.title || '', req.body.type || 'image', url, parseInt(req.body.duration) || 6, true]
+    `INSERT INTO ads (id, building_id, title, type, url, duration, active, start_date, end_date, advertiser_name, advertiser_phone, advertiser_email)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+    [id, req.params.id, req.body.title || '', req.body.type || 'image', url, parseInt(req.body.duration) || 6, true,
+     req.body.start_date || null, req.body.end_date || null,
+     req.body.advertiser_name || '', req.body.advertiser_phone || '', req.body.advertiser_email || '']
   );
-  res.json({ id: rows[0].id, title: rows[0].title, type: rows[0].type, url: rows[0].url, duration: rows[0].duration, active: rows[0].active });
+  const r = rows[0];
+  res.json({ id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration, active: r.active });
 });
 app.put('/api/superadmin/buildings/:id/ads/:adId', requireSuper, async (req, res) => {
   await pool.query('UPDATE ads SET active=$1 WHERE id=$2 AND building_id=$3',
@@ -427,6 +529,101 @@ app.put('/api/superadmin/buildings/:id/ads/:adId', requireSuper, async (req, res
 app.delete('/api/superadmin/buildings/:id/ads/:adId', requireSuper, async (req, res) => {
   await pool.query('DELETE FROM ads WHERE id=$1 AND building_id=$2', [req.params.adId, req.params.id]);
   res.json({ ok: true });
+});
+app.post('/api/superadmin/buildings/:id/ads/reorder', requireSuper, async (req, res) => {
+  const { adId, direction } = req.body;
+  const { rows } = await pool.query('SELECT * FROM ads WHERE building_id=$1 ORDER BY sort_order, id', [req.params.id]);
+  const idx = rows.findIndex(a => a.id == adId);
+  if (idx === -1) return res.json({ ok: false });
+  const ni = direction === 'up' ? idx - 1 : idx + 1;
+  if (ni < 0 || ni >= rows.length) return res.json({ ok: false });
+  await pool.query('UPDATE ads SET sort_order=$1 WHERE id=$2', [ni, rows[idx].id]);
+  await pool.query('UPDATE ads SET sort_order=$1 WHERE id=$2', [idx, rows[ni].id]);
+  res.json({ ok: true });
+});
+// toggle global ad active state for a specific building
+app.post('/api/superadmin/buildings/:id/global-ads/:gid/toggle', requireSuper, async (req, res) => {
+  await pool.query('UPDATE global_ad_buildings SET active=$1 WHERE global_ad_id=$2 AND building_id=$3',
+    [req.body.active, req.params.gid, req.params.id]);
+  res.json({ ok: true });
+});
+
+// --- פרסומות גלובליות ---
+app.get('/api/superadmin/global-ads', requireSuper, async (req, res) => {
+  const { rows: ads } = await pool.query('SELECT * FROM global_ads ORDER BY created_at DESC, id DESC');
+  const { rows: bldgs } = await pool.query(
+    'SELECT global_ad_id, building_id, active FROM global_ad_buildings');
+  const { rows: allBuildings } = await pool.query('SELECT id, name FROM buildings ORDER BY name');
+  const bldgMap = {};
+  bldgs.forEach(b => {
+    if (!bldgMap[b.global_ad_id]) bldgMap[b.global_ad_id] = [];
+    bldgMap[b.global_ad_id].push({ building_id: b.building_id, active: b.active });
+  });
+  res.json(ads.map(r => ({
+    id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration, active: r.active,
+    start_date: r.start_date, end_date: r.end_date,
+    advertiser_name: r.advertiser_name, advertiser_phone: r.advertiser_phone, advertiser_email: r.advertiser_email,
+    created_at: r.created_at,
+    buildings: bldgMap[r.id] || []
+  })));
+});
+
+app.post('/api/superadmin/global-ads', requireSuper, upload.single('file'), async (req, res) => {
+  const id  = Date.now();
+  const url = req.file ? (req.file.secure_url || req.file.path || '') : (req.body.url || '');
+  const { rows } = await pool.query(
+    `INSERT INTO global_ads (id, title, type, url, duration, active, start_date, end_date, advertiser_name, advertiser_phone, advertiser_email)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+    [id, req.body.title || '', req.body.type || 'image', url, parseInt(req.body.duration) || 6, true,
+     req.body.start_date || null, req.body.end_date || null,
+     req.body.advertiser_name || '', req.body.advertiser_phone || '', req.body.advertiser_email || '']
+  );
+  // assign to buildings
+  const buildingIds = req.body.building_ids ? JSON.parse(req.body.building_ids) : [];
+  for (const bid of buildingIds) {
+    await pool.query(
+      'INSERT INTO global_ad_buildings (id, global_ad_id, building_id) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
+      [Date.now() + Math.random(), id, bid]
+    );
+  }
+  const r = rows[0];
+  res.json({ id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration, active: r.active, buildings: buildingIds.map(b=>({building_id:b,active:true})) });
+});
+
+app.put('/api/superadmin/global-ads/:id', requireSuper, async (req, res) => {
+  const { title, duration, start_date, end_date, advertiser_name, advertiser_phone, advertiser_email, active } = req.body;
+  await pool.query(
+    `UPDATE global_ads SET title=$1, duration=$2, start_date=$3, end_date=$4,
+     advertiser_name=$5, advertiser_phone=$6, advertiser_email=$7, active=$8 WHERE id=$9`,
+    [title||'', parseInt(duration)||6, start_date||null, end_date||null,
+     advertiser_name||'', advertiser_phone||'', advertiser_email||'',
+     active !== false && active !== 'false', req.params.id]
+  );
+  // update building assignments
+  if (req.body.building_ids !== undefined) {
+    const buildingIds = JSON.parse(req.body.building_ids);
+    await pool.query('DELETE FROM global_ad_buildings WHERE global_ad_id=$1', [req.params.id]);
+    for (const bid of buildingIds) {
+      await pool.query(
+        'INSERT INTO global_ad_buildings (id, global_ad_id, building_id) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
+        [Date.now() + Math.random(), req.params.id, bid]
+      );
+    }
+  }
+  res.json({ ok: true });
+});
+
+app.delete('/api/superadmin/global-ads/:id', requireSuper, async (req, res) => {
+  await pool.query('DELETE FROM global_ads WHERE id=$1', [req.params.id]);
+  res.json({ ok: true });
+});
+
+app.get('/api/superadmin/global-ads/:id/buildings', requireSuper, async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT gab.building_id, gab.active, b.name
+     FROM global_ad_buildings gab JOIN buildings b ON b.id=gab.building_id
+     WHERE gab.global_ad_id=$1`, [req.params.id]);
+  res.json(rows);
 });
 
 // --- דפים ---

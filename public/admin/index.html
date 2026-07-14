@@ -131,6 +131,17 @@
     border-radius: 10px; padding: 20px; text-align: center; color: #888; margin-bottom: 20px;
   }
   .ads-readonly-note strong { color: #a0a0ff; display: block; margin-bottom: 6px; font-size: 1rem; }
+  .global-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+    background: rgba(74,74,255,0.15); color: #a080ff; border: 1px solid rgba(74,74,255,0.4);
+    white-space: nowrap;
+  }
+  .sort-btn {
+    background: #2a2a50; color: #a0a0ff; border: 1px solid #3a3a7a;
+    border-radius: 4px; padding: 2px 7px; cursor: pointer; font-size: 0.8rem; font-family: inherit;
+  }
+  .sort-btn:disabled { opacity: 0.3; cursor: default; }
 
   .theme-card { border-radius: 14px; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: border 0.2s, transform 0.15s; }
   .theme-card:hover { transform: scale(1.03); }
@@ -398,7 +409,14 @@ function renderAdsArea() {
         <h3>הוספת פרסומת</h3>
         <div class="form-row" style="margin-bottom:12px">
           <input type="text" id="adTitle" placeholder="שם המפרסם / כותרת">
-          <input type="number" id="adDuration" placeholder="שניות תצוגה" value="6" style="max-width:160px">
+          <input type="number" id="adDuration" placeholder="שניות תצוגה" value="6" style="max-width:130px">
+          <input type="date" id="adStart" placeholder="תאריך התחלה" style="max-width:150px">
+          <input type="date" id="adEnd" placeholder="תאריך סיום" style="max-width:150px">
+        </div>
+        <div class="form-row" style="margin-bottom:12px">
+          <input type="text" id="adAdvName" placeholder="שם איש קשר (לחיוב)">
+          <input type="tel" id="adAdvPhone" placeholder="טלפון" style="max-width:150px">
+          <input type="email" id="adAdvEmail" placeholder="מייל">
         </div>
         <label class="file-input-label">
           📁 לחץ לבחירת תמונה או סרטון
@@ -528,17 +546,26 @@ async function loadAds() {
   const data = await fetch('/api/' + BID + '/ads/all').then(r => r.json());
   const el = document.getElementById('adList');
   if (!data.length) { el.innerHTML = '<div class="empty-state">אין פרסומות עדיין</div>'; return; }
-  el.innerHTML = data.map(a => `
+  const localCount = data.filter(a => !a.is_global).length;
+  el.innerHTML = data.map((a, i) => {
+    const localIdx = data.slice(0, i+1).filter(x => !x.is_global).length - 1;
+    return `
     <div class="card">
       <div class="media-card">
+        ${!a.is_global ? `
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <button class="sort-btn" onclick="reorderAd(${a.id},'up')" ${localIdx===0?'disabled':''}>▲</button>
+            <button class="sort-btn" onclick="reorderAd(${a.id},'down')" ${localIdx===localCount-1?'disabled':''}>▼</button>
+          </div>
+        ` : '<div style="width:26px"></div>'}
         ${a.type === 'video'
           ? `<video class="media-thumb" src="${a.url}" muted></video>`
           : a.url ? `<img class="media-thumb" src="${a.url}" alt="">` : `<div class="media-thumb"></div>`}
         <div class="media-info">
-          <strong>${a.title}</strong>
-          <small>${a.duration} שניות תצוגה | ${a.active ? 'פעיל' : 'מושהה'}</small>
+          <strong>${a.title} ${a.is_global ? '<span class="global-badge">🌐 גלובלי</span>' : ''}</strong>
+          <small>${a.duration} שניות | ${a.active ? 'פעיל' : 'מושהה'}${a.start_date || a.end_date ? ' | ' + (a.start_date||'—') + ' עד ' + (a.end_date||'∞') : ''}</small>
         </div>
-        ${canManageAds ? `
+        ${canManageAds && !a.is_global ? `
           <button class="toggle-btn ${a.active ? 'on' : 'off'}" onclick="toggleAd(${a.id},${!a.active})">
             ${a.active ? '✓ פעיל' : '⏸ מושהה'}
           </button>
@@ -546,7 +573,15 @@ async function loadAds() {
         ` : ''}
       </div>
     </div>
-  `).join('');
+  `}).join('');
+}
+
+async function reorderAd(id, direction) {
+  await fetch('/api/' + BID + '/ads/reorder', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ id, direction })
+  });
+  loadAds();
 }
 
 async function uploadAd() {
@@ -561,13 +596,21 @@ async function uploadAd() {
   form.append('active', 'true');
   form.append('type', file.type.startsWith('video') ? 'video' : 'image');
   form.append('file', file);
+  form.append('start_date', document.getElementById('adStart')?.value || '');
+  form.append('end_date',   document.getElementById('adEnd')?.value   || '');
+  form.append('advertiser_name',  document.getElementById('adAdvName')?.value.trim()  || '');
+  form.append('advertiser_phone', document.getElementById('adAdvPhone')?.value.trim() || '');
+  form.append('advertiser_email', document.getElementById('adAdvEmail')?.value.trim() || '');
   const btn = document.querySelector('[onclick="uploadAd()"]');
   btn.textContent = '⏳ מעלה...'; btn.disabled = true;
   try {
     const res = await fetch('/api/' + BID + '/ads', { method: 'POST', body: form });
     const result = await res.json();
     if (!result.url) throw new Error('לא התקבל קישור מהענן');
-    document.getElementById('adTitle').value = '';
+    ['adTitle','adStart','adEnd','adAdvName','adAdvPhone','adAdvEmail'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value='';
+    });
+    document.getElementById('adDuration').value = '6';
     document.getElementById('adFile').value  = '';
     document.getElementById('fileSelected').textContent = '';
     loadAds();

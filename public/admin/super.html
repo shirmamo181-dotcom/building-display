@@ -142,6 +142,50 @@
   .empty-state { text-align: center; color: #555; padding: 40px; font-size: 1rem; }
   .section-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 24px; color: #fff; }
   .error-msg { color: #ff6b6b; font-size: 0.88rem; margin-top: 10px; }
+
+  /* פרסומות גלובלי */
+  .global-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+    background: rgba(106,74,255,0.15); color: #a080ff; border: 1px solid rgba(106,74,255,0.4);
+    cursor: pointer; white-space: nowrap;
+  }
+  .global-badge:hover { background: rgba(106,74,255,0.3); }
+  .sort-btn {
+    background: #2a2a50; color: #a0a0ff; border: 1px solid #3a3a7a;
+    border-radius: 4px; padding: 2px 7px; cursor: pointer; font-size: 0.8rem; font-family: inherit;
+  }
+  .sort-btn:hover { background: #3a3a6a; }
+  .sort-btn:disabled { opacity: 0.3; cursor: default; }
+  .global-ad-card {
+    background: #1a1a3e; border: 1px solid #2a2a5a; border-radius: 14px;
+    padding: 18px 20px; margin-bottom: 14px;
+  }
+  .global-ad-header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .global-ad-thumb { width: 80px; height: 55px; object-fit: cover; border-radius: 8px; background: #333; flex-shrink: 0; }
+  .building-status-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .bstatus-chip {
+    font-size: 0.75rem; padding: 3px 10px; border-radius: 20px; cursor: pointer;
+    border: 1px solid; transition: background 0.15s;
+  }
+  .bstatus-chip.on  { color: #2ecc71; border-color: #2ecc71; background: rgba(46,204,113,0.08); }
+  .bstatus-chip.off { color: #888; border-color: #555; background: rgba(255,255,255,0.03); }
+  .form-small {
+    display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 10px; margin-bottom: 10px;
+  }
+  .form-small input, .form-small select {
+    padding: 10px 12px; border-radius: 8px; border: 1px solid #333;
+    background: #0f0f1e; color: #fff; font-size: 0.9rem; text-align: right; font-family: inherit;
+  }
+  .form-small input:focus { outline: none; border-color: #6a4aff; }
+  .building-checkboxes { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+  .building-checkbox-label {
+    display: flex; align-items: center; gap: 6px; cursor: pointer;
+    background: #12122a; border: 1px solid #2a2a5a; border-radius: 8px;
+    padding: 6px 12px; font-size: 0.85rem; transition: border-color 0.15s;
+  }
+  .building-checkbox-label:hover { border-color: #6a4aff; }
+  .building-checkbox-label input[type=checkbox] { accent-color: #6a4aff; width: 14px; height: 14px; }
 </style>
 </head>
 <body>
@@ -158,6 +202,7 @@
   <div class="tab active" onclick="showTab('buildings',this)">🏢 בניינים</div>
   <div class="tab" onclick="showTab('add',this)">➕ הוספת בניין</div>
   <div class="tab" onclick="showTab('themes',this)">🎨 ערכות נושא</div>
+  <div class="tab" onclick="showTab('global-ads',this)">📢 פרסומות גלובלי</div>
 </div>
 
 <div class="content">
@@ -176,6 +221,38 @@
     <div id="themesEditorList"></div>
     <button class="btn-add" onclick="saveThemes()" style="margin-top:8px">💾 שמור שינויים</button>
     <div id="themesSaveMsg" style="margin-top:12px;font-size:0.9rem;min-height:20px"></div>
+  </div>
+
+  <!-- פרסומות גלובלי -->
+  <div class="section" id="section-global-ads">
+    <div class="section-title">ניהול פרסומות גלובלי</div>
+    <div class="add-form">
+      <h3>הוספת פרסומת גלובלית</h3>
+      <div class="form-small">
+        <input type="text" id="gAdTitle" placeholder="שם המפרסם / כותרת">
+        <input type="number" id="gAdDur" value="6" placeholder="שניות תצוגה">
+        <input type="date" id="gAdStart" placeholder="תאריך התחלה">
+        <input type="date" id="gAdEnd" placeholder="תאריך סיום">
+        <input type="text" id="gAdAdvName" placeholder="שם איש קשר (חיוב)">
+        <input type="tel" id="gAdAdvPhone" placeholder="טלפון">
+        <input type="email" id="gAdAdvEmail" placeholder="מייל">
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:0.82rem;color:#888;margin-bottom:8px">בחר בניינים לשידור:</div>
+        <div class="building-checkboxes" id="gBuildingCheckboxes">טוען...</div>
+        <label style="font-size:0.82rem;color:#a080ff;cursor:pointer;display:flex;align-items:center;gap:6px;margin-top:6px">
+          <input type="checkbox" id="gSelectAll" style="accent-color:#6a4aff" onchange="toggleAllBuildings(this.checked)"> בחר את כולם
+        </label>
+      </div>
+      <label class="file-input-label">
+        📁 בחר תמונה או סרטון (16:9)
+        <input type="file" id="gAdFile" accept="image/*,video/mp4" onchange="document.getElementById('gFileSelected').textContent=this.files[0]?.name||''">
+      </label>
+      <div id="gFileSelected" style="color:#7eb8d4;font-size:0.85rem;margin-bottom:10px"></div>
+      <button class="btn-add" onclick="uploadGlobalAd()">+ שדר לבניינים הנבחרים</button>
+      <div id="gUploadMsg" style="margin-top:10px;font-size:0.9rem"></div>
+    </div>
+    <div id="globalAdsList"></div>
   </div>
 
   <!-- הוספת בניין -->
@@ -202,9 +279,14 @@
     <button class="modal-close" onclick="closeAdsModal()">✕</button>
     <h2 id="adsModalTitle">פרסומות</h2>
     <div id="adsModalAddForm" style="margin-bottom:20px">
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
-        <input type="text" id="mAdTitle" placeholder="שם המפרסם" style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
-        <input type="number" id="mAdDur" value="6" placeholder="שניות" style="width:90px;padding:10px 12px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <input type="text" id="mAdTitle" placeholder="שם המפרסם / כותרת" style="padding:10px 12px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+        <input type="number" id="mAdDur" value="6" placeholder="שניות תצוגה" style="padding:10px 12px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+        <input type="date" id="mAdStart" placeholder="תאריך התחלה" style="padding:10px 12px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+        <input type="date" id="mAdEnd" placeholder="תאריך סיום" style="padding:10px 12px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+        <input type="text" id="mAdAdvName" placeholder="שם איש קשר (חיוב)" style="padding:10px 12px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+        <input type="tel" id="mAdAdvPhone" placeholder="טלפון" style="padding:10px 12px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+        <input type="email" id="mAdAdvEmail" placeholder="מייל" style="grid-column:span 2;padding:10px 12px;border-radius:8px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
       </div>
       <label class="file-input-label">
         📁 בחר תמונה או סרטון
@@ -234,6 +316,7 @@
 
 <script>
 let currentAdsBid = null;
+let allBuildingsCache = [];
 
 async function init() {
   const me = await fetch('/api/me').then(r => r.json());
@@ -253,6 +336,7 @@ function showTab(name, el) {
   document.getElementById('section-'+name).classList.add('active');
   if (name === 'buildings') loadBuildings();
   if (name === 'themes') loadThemesEditor();
+  if (name === 'global-ads') loadGlobalAdsTab();
 }
 
 async function loadBuildings() {
@@ -311,9 +395,9 @@ async function addBuilding() {
 }
 
 async function toggleAds(bid, val) {
-  await fetch('/api/superadmin/buildings/' + bid, {
-    method: 'PUT', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ canManageAds: val })
+  await fetch('/api/superadmin/buildings/' + bid + '/toggle-ads', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ value: val })
   });
   loadBuildings();
 }
@@ -383,19 +467,31 @@ async function loadModalAds() {
   const data = await fetch('/api/superadmin/buildings/' + currentAdsBid + '/ads').then(r => r.json()).catch(() => []);
   const el = document.getElementById('adsModalList');
   if (!data.length) { el.innerHTML = '<div class="empty-state" style="padding:20px">אין פרסומות עדיין</div>'; return; }
-  el.innerHTML = data.map(a => `
+  el.innerHTML = data.map((a, i) => `
     <div class="media-row">
+      <div style="display:flex;flex-direction:column;gap:3px">
+        ${!a.is_global ? `
+          <button class="sort-btn" onclick="reorderModalAd(${a.id},'up')" ${i===0?'disabled':''}>▲</button>
+          <button class="sort-btn" onclick="reorderModalAd(${a.id},'down')" ${i===data.length-1?'disabled':''}>▼</button>
+        ` : '<div style="width:24px"></div>'}
+      </div>
       ${a.type === 'video'
         ? `<video class="media-thumb" src="${a.url}" muted></video>`
         : a.url ? `<img class="media-thumb" src="${a.url}" alt="">` : `<div class="media-thumb"></div>`}
-      <div class="ad-info">
-        <strong>${a.title}</strong>
-        <small>${a.duration}שנ' | ${a.active ? '✓ פעיל' : '⏸ מושהה'}</small>
+      <div class="ad-info" style="flex:1">
+        <strong>${a.title} ${a.is_global ? '<span class="global-badge" onclick="showGlobalBuildingStatus('+a.id+')">🌐 גלובלי</span>' : ''}</strong>
+        <small>${a.duration}שנ' | ${a.active ? '✓ פעיל' : '⏸ מושהה'}${a.advertiser_name ? ' | ' + a.advertiser_name : ''}${a.advertiser_phone ? ' | ' + a.advertiser_phone : ''}</small>
+        ${a.start_date || a.end_date ? `<small style="display:block;color:#666">${a.start_date||'—'} עד ${a.end_date||'—'}</small>` : ''}
       </div>
-      <button class="btn-action btn-toggle" style="padding:5px 12px;font-size:0.8rem"
-        onclick="toggleModalAd(${a.id},${!a.active})">${a.active ? 'השהה' : 'הפעל'}</button>
-      <button class="btn-del-b" style="padding:5px 12px;font-size:0.8rem;border-radius:6px;cursor:pointer;font-family:inherit"
-        onclick="deleteModalAd(${a.id})">מחק</button>
+      ${a.is_global ? `
+        <button class="btn-action btn-toggle" style="padding:5px 12px;font-size:0.8rem"
+          onclick="toggleGlobalAdForBuilding(${a.id},${!a.active})">${a.active ? 'השהה כאן' : 'הפעל כאן'}</button>
+      ` : `
+        <button class="btn-action btn-toggle" style="padding:5px 12px;font-size:0.8rem"
+          onclick="toggleModalAd(${a.id},${!a.active})">${a.active ? 'השהה' : 'הפעל'}</button>
+        <button class="btn-del-b" style="padding:5px 12px;font-size:0.8rem;border-radius:6px;cursor:pointer;font-family:inherit"
+          onclick="deleteModalAd(${a.id})">מחק</button>
+      `}
     </div>
   `).join('');
 }
@@ -410,13 +506,20 @@ async function uploadModalAd() {
   form.append('title', title); form.append('duration', dur); form.append('active', 'true');
   form.append('type', file.type.startsWith('video') ? 'video' : 'image');
   form.append('file', file);
+  form.append('start_date', document.getElementById('mAdStart').value || '');
+  form.append('end_date',   document.getElementById('mAdEnd').value   || '');
+  form.append('advertiser_name',  document.getElementById('mAdAdvName').value.trim());
+  form.append('advertiser_phone', document.getElementById('mAdAdvPhone').value.trim());
+  form.append('advertiser_email', document.getElementById('mAdAdvEmail').value.trim());
   const btn = document.querySelector('[onclick="uploadModalAd()"]');
   btn.textContent = '⏳ מעלה...'; btn.disabled = true;
   try {
     const res = await fetch('/api/superadmin/buildings/' + currentAdsBid + '/ads', { method: 'POST', body: form });
     const r = await res.json();
     if (!r.url) throw new Error('לא התקבל קישור');
-    document.getElementById('mAdTitle').value = '';
+    ['mAdTitle','mAdDur','mAdStart','mAdEnd','mAdAdvName','mAdAdvPhone','mAdAdvEmail'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = id === 'mAdDur' ? '6' : '';
+    });
     document.getElementById('mAdFile').value  = '';
     document.getElementById('mFileSelected').textContent = '';
     loadModalAds();
@@ -432,10 +535,150 @@ async function toggleModalAd(adId, active) {
   loadModalAds();
 }
 
+async function toggleGlobalAdForBuilding(gid, active) {
+  await fetch('/api/superadmin/buildings/' + currentAdsBid + '/global-ads/' + gid + '/toggle', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ active })
+  });
+  loadModalAds();
+}
+
+async function reorderModalAd(adId, direction) {
+  await fetch('/api/superadmin/buildings/' + currentAdsBid + '/ads/reorder', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ adId, direction })
+  });
+  loadModalAds();
+}
+
 async function deleteModalAd(adId) {
   if (!confirm('למחוק פרסומת זו?')) return;
   await fetch('/api/superadmin/buildings/' + currentAdsBid + '/ads/' + adId, { method: 'DELETE' });
   loadModalAds();
+}
+
+async function showGlobalBuildingStatus(gid) {
+  const rows = await fetch('/api/superadmin/global-ads/' + gid + '/buildings').then(r => r.json()).catch(() => []);
+  if (!rows.length) return alert('פרסומת זו לא משויכת לאף בניין');
+  const names = rows.map(r => `${r.name} — ${r.active ? 'פעיל' : 'מושהה'}`).join('\n');
+  alert('פרסומת גלובלית זו מופיעה בבניינים:\n\n' + names);
+}
+
+// --- פרסומות גלובלי ---
+async function loadGlobalAdsTab() {
+  const buildings = await fetch('/api/superadmin/buildings').then(r => r.json()).catch(() => []);
+  allBuildingsCache = buildings;
+  const cbContainer = document.getElementById('gBuildingCheckboxes');
+  cbContainer.innerHTML = buildings.map(b => `
+    <label class="building-checkbox-label">
+      <input type="checkbox" class="gBuildingCb" value="${b.id}"> ${b.name}
+    </label>
+  `).join('');
+  loadGlobalAdsList();
+}
+
+async function loadGlobalAdsList() {
+  const data = await fetch('/api/superadmin/global-ads').then(r => r.json()).catch(() => []);
+  const el = document.getElementById('globalAdsList');
+  if (!data.length) { el.innerHTML = '<div class="empty-state">אין פרסומות גלובליות עדיין</div>'; return; }
+  el.innerHTML = data.map(a => {
+    const bNames = allBuildingsCache.reduce((m, b) => { m[b.id] = b.name; return m; }, {});
+    const chips = a.buildings.map(b => `
+      <span class="bstatus-chip ${b.active ? 'on' : 'off'}" onclick="toggleGlobalBuildingChip(${a.id},'${b.building_id}',${!b.active})">
+        ${bNames[b.building_id] || b.building_id} ${b.active ? '✓' : '⏸'}
+      </span>
+    `).join('');
+    return `
+      <div class="global-ad-card">
+        <div class="global-ad-header">
+          ${a.type === 'video'
+            ? `<video class="global-ad-thumb" src="${a.url}" muted></video>`
+            : a.url ? `<img class="global-ad-thumb" src="${a.url}" alt="">` : `<div class="global-ad-thumb"></div>`}
+          <div style="flex:1">
+            <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:4px">${a.title}</div>
+            <div style="font-size:0.82rem;color:#888">
+              ${a.duration}שנ'
+              ${a.start_date ? ' | ' + a.start_date + ' עד ' + (a.end_date||'∞') : ''}
+              ${a.advertiser_name ? ' | 👤 ' + a.advertiser_name : ''}
+              ${a.advertiser_phone ? ' | 📞 ' + a.advertiser_phone : ''}
+            </div>
+          </div>
+          <button class="btn-action btn-toggle" style="padding:5px 14px;font-size:0.82rem"
+            onclick="toggleGlobalAdGlobal(${a.id},${!a.active})">${a.active ? '⏸ השהה הכל' : '▶ הפעל הכל'}</button>
+          <button class="btn-del-b" style="padding:5px 12px;font-size:0.8rem;border-radius:6px;cursor:pointer;font-family:inherit"
+            onclick="deleteGlobalAd(${a.id})">מחק</button>
+        </div>
+        ${chips ? `<div style="font-size:0.78rem;color:#666;margin-bottom:6px">לחץ על בניין לשינוי סטטוס:</div><div class="building-status-row">${chips}</div>` : '<div style="font-size:0.8rem;color:#555">לא משויך לבניינים</div>'}
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleAllBuildings(checked) {
+  document.querySelectorAll('.gBuildingCb').forEach(cb => cb.checked = checked);
+}
+
+async function uploadGlobalAd() {
+  const title = document.getElementById('gAdTitle').value.trim();
+  const file  = document.getElementById('gAdFile').files[0];
+  const dur   = document.getElementById('gAdDur').value || 6;
+  const selectedBuildings = [...document.querySelectorAll('.gBuildingCb:checked')].map(cb => cb.value);
+  const msg = document.getElementById('gUploadMsg');
+  if (!title) { msg.style.color='#ff6b6b'; msg.textContent='נא להכניס שם מפרסם'; return; }
+  if (!file)  { msg.style.color='#ff6b6b'; msg.textContent='נא לבחור קובץ'; return; }
+  if (!selectedBuildings.length) { msg.style.color='#ff6b6b'; msg.textContent='נא לבחור לפחות בניין אחד'; return; }
+  const form = new FormData();
+  form.append('title', title); form.append('duration', dur); form.append('active', 'true');
+  form.append('type', file.type.startsWith('video') ? 'video' : 'image');
+  form.append('file', file);
+  form.append('start_date', document.getElementById('gAdStart').value || '');
+  form.append('end_date',   document.getElementById('gAdEnd').value   || '');
+  form.append('advertiser_name',  document.getElementById('gAdAdvName').value.trim());
+  form.append('advertiser_phone', document.getElementById('gAdAdvPhone').value.trim());
+  form.append('advertiser_email', document.getElementById('gAdAdvEmail').value.trim());
+  form.append('building_ids', JSON.stringify(selectedBuildings));
+  const btn = document.querySelector('[onclick="uploadGlobalAd()"]');
+  btn.textContent = '⏳ מעלה...'; btn.disabled = true;
+  msg.textContent = '';
+  try {
+    const res = await fetch('/api/superadmin/global-ads', { method: 'POST', body: form });
+    const r = await res.json();
+    if (!r.id) throw new Error('שגיאה בשמירה');
+    ['gAdTitle','gAdStart','gAdEnd','gAdAdvName','gAdAdvPhone','gAdAdvEmail'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = '';
+    });
+    document.getElementById('gAdDur').value = '6';
+    document.getElementById('gAdFile').value = '';
+    document.getElementById('gFileSelected').textContent = '';
+    document.querySelectorAll('.gBuildingCb').forEach(cb => cb.checked = false);
+    document.getElementById('gSelectAll').checked = false;
+    msg.style.color = '#2ecc71'; msg.textContent = '✓ הפרסומת שודרה בהצלחה!';
+    setTimeout(() => { msg.textContent = ''; }, 4000);
+    loadGlobalAdsList();
+  } catch(e) { msg.style.color='#ff6b6b'; msg.textContent='שגיאה: ' + e.message; }
+  btn.textContent = '+ שדר לבניינים הנבחרים'; btn.disabled = false;
+}
+
+async function toggleGlobalAdGlobal(gid, active) {
+  await fetch('/api/superadmin/global-ads/' + gid, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ active })
+  });
+  loadGlobalAdsList();
+}
+
+async function toggleGlobalBuildingChip(gid, bid, active) {
+  await fetch('/api/superadmin/buildings/' + bid + '/global-ads/' + gid + '/toggle', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ active })
+  });
+  loadGlobalAdsList();
+}
+
+async function deleteGlobalAd(gid) {
+  if (!confirm('למחוק פרסומת גלובלית זו?\nהיא תוסר מכל הבניינים.')) return;
+  await fetch('/api/superadmin/global-ads/' + gid, { method: 'DELETE' });
+  loadGlobalAdsList();
 }
 
 // --- ערכות נושא ---

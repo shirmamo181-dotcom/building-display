@@ -158,9 +158,11 @@ app.get('/api/me', (req, res) => {
 
 // --- חדשות ישראל היום ---
 let ilHayomCache = [], ilHayomCacheTime = 0;
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
 async function fetchOgImage(url) {
   try {
-    const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(5000) });
+    const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(5000) });
     const html = await r.text();
     const m = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
            || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
@@ -169,7 +171,7 @@ async function fetchOgImage(url) {
 }
 async function fetchIsraelHayom() {
   try {
-    const r = await fetch('https://www.israelhayom.co.il/rss.xml', { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const r = await fetch('https://www.israelhayom.co.il/rss.xml', { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(10000) });
     const xml = await r.text();
     const result = await xml2js.parseStringPromise(xml);
     const items = result.rss.channel[0].item.slice(0, 10).map(i => ({

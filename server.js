@@ -180,7 +180,7 @@ async function fetchIsraelHayom() {
     const images = await Promise.all(items.map(i => i.link ? fetchOgImage(i.link) : Promise.resolve('')));
     items.forEach((item, idx) => { item.image = images[idx]; });
     ilHayomCache = items; ilHayomCacheTime = Date.now();
-  } catch(e) { console.log('שגיאה ישראל היום:', e.message); }
+  } catch(e) { console.error('שגיאה ישראל היום:', e.message, e.cause?.message || ''); }
 }
 fetchIsraelHayom();
 setInterval(fetchIsraelHayom, 10 * 60 * 1000);

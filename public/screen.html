@@ -362,6 +362,43 @@
   body.theme-pink .wday.today .wday-temp-min { color: rgba(255,255,255,0.7); }
   body.theme-pink .wday.today .wday-today-label { color: #fff; opacity: 1; }
 
+  /* ===== ערכת ורוד לבן - פרסומות מורחבת ===== */
+  body.theme-pink-ads .top-bar { background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); box-shadow: 0 3px 16px rgba(233,30,99,0.12); }
+  body.theme-pink-ads .building-name { color: #111; }
+  body.theme-pink-ads .building-name svg { color: #e91e63; }
+  body.theme-pink-ads .top-bar-center::before { background: linear-gradient(to left, #f8bbd0, transparent); }
+  body.theme-pink-ads .top-bar-center::after  { background: linear-gradient(to right, #fce4ec, transparent); }
+  body.theme-pink-ads .update-item { color: #333; background: transparent; border: none; }
+  body.theme-pink-ads .update-item::before { content: '●'; color: #e91e63; background: none; }
+  body.theme-pink-ads .datetime { color: #111; }
+  body.theme-pink-ads .time { color: #111; }
+  body.theme-pink-ads .date { color: #555; }
+  body.theme-pink-ads #mainBody { grid-template-columns: 1fr 2.4fr; }
+  body.theme-pink-ads #mainBody .left-panel { display: none; }
+  body.theme-pink-ads .panel { background: #fff; border: 1px solid #fce4ec; box-shadow: 0 2px 14px rgba(233,30,99,0.07); }
+  body.theme-pink-ads .panel-header { background: #fff5f7; border-bottom: 1px solid #fce4ec; }
+  body.theme-pink-ads .panel-title { color: #111; }
+  body.theme-pink-ads .panel-header-icon { background: #fce4ec; color: #e91e63; }
+  body.theme-pink-ads .biz-item { border-right-color: #f8bbd0 !important; }
+  body.theme-pink-ads .biz-item.alt { background: #fff5f7; border-right-color: #e91e63 !important; }
+  body.theme-pink-ads .biz-name { color: #111; }
+  body.theme-pink-ads .biz-desc { color: #888; }
+  body.theme-pink-ads .biz-room { background: #fce4ec; color: #ad1457; }
+  body.theme-pink-ads .biz-item.alt .biz-room { background: #e91e63; color: #fff; }
+  body.theme-pink-ads .biz-office { background: #111; color: #fff; border: none; }
+  body.theme-pink-ads .biz-item.alt .biz-office { background: #fff; color: #111; border: 1.5px solid #111; }
+  body.theme-pink-ads .promo-panel { background: #fff; border: 1px solid #fce4ec; box-shadow: 0 2px 14px rgba(233,30,99,0.07); }
+  body.theme-pink-ads .no-ads { background: linear-gradient(160deg, #fce4ec 0%, #f8bbd0 60%, #fce4ec 100%) !important; }
+  body.theme-pink-ads .no-ads-label { color: #ad1457; letter-spacing: 4px; }
+  body.theme-pink-ads .no-ads-main { color: #111; font-weight: 300; }
+  body.theme-pink-ads .no-ads-phone { color: #111; background: rgba(233,30,99,0.07); border-color: rgba(233,30,99,0.2); }
+  body.theme-pink-ads .no-ads-sub { color: #ad1457; opacity: 0.7; }
+  body.theme-pink-ads .ad-dot { background: rgba(233,30,99,0.2); }
+  body.theme-pink-ads .ad-dot.active { background: #e91e63; }
+  body.theme-pink-ads .promo-contact-bar { background: #111; color: #fff; }
+  body.theme-pink-ads .news-time { background: #fce4ec; color: #ad1457; font-weight: 700; }
+  body.theme-pink-ads .news-item::before { content: '●'; color: #e91e63; }
+
   /* ===== ערכת כחול לבן - פרסומות מורחבת ===== */
   #mainBody.theme-ads-focus {
     grid-template-columns: 1fr 2.4fr;
@@ -833,6 +870,7 @@
     document.body.classList.remove('theme-vibrant');
     document.body.classList.remove('theme-vibrant-ads');
     document.body.classList.remove('theme-pink');
+    document.body.classList.remove('theme-pink-ads');
 
     // סדר ברירת מחדל: עסקים | פרסומות | תחזית
     mainBody.append(biz, ads, weather);
@@ -847,6 +885,8 @@
       document.body.classList.add('theme-vibrant-ads');
     } else if (theme === 'pink') {
       document.body.classList.add('theme-pink');
+    } else if (theme === 'pink-ads') {
+      document.body.classList.add('theme-pink-ads');
     }
   }
 

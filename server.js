@@ -171,16 +171,22 @@ async function fetchOgImage(url) {
 }
 async function fetchIsraelHayom() {
   try {
-    const r = await fetch('https://www.israelhayom.co.il/rss.xml', { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(10000) });
-    const xml = await r.text();
-    const result = await xml2js.parseStringPromise(xml);
-    const items = result.rss.channel[0].item.slice(0, 10).map(i => ({
-      title: i.title[0], link: i.link?.[0] || '', pubDate: i.pubDate?.[0] || '', image: ''
+    const proxyUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.israelhayom.co.il/rss.xml') + '&count=10';
+    const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
+    const data = await r.json();
+    if (data.status !== 'ok' || !data.items?.length) throw new Error('rss2json returned: ' + data.status);
+    const items = data.items.map(i => ({
+      title: i.title || '',
+      link: i.link || '',
+      pubDate: i.pubDate || '',
+      image: i.thumbnail || i.enclosure?.link || ''
     }));
-    const images = await Promise.all(items.map(i => i.link ? fetchOgImage(i.link) : Promise.resolve('')));
+    // Fill missing images from og:image
+    const images = await Promise.all(items.map(i => (!i.image && i.link) ? fetchOgImage(i.link) : Promise.resolve(i.image)));
     items.forEach((item, idx) => { item.image = images[idx]; });
     ilHayomCache = items; ilHayomCacheTime = Date.now();
-  } catch(e) { console.error('שגיאה ישראל היום:', e.message, e.cause?.message || ''); }
+    console.log('ישראל היום: נטענו', items.length, 'כתבות');
+  } catch(e) { console.error('שגיאה ישראל היום:', e.message); }
 }
 fetchIsraelHayom();
 setInterval(fetchIsraelHayom, 10 * 60 * 1000);

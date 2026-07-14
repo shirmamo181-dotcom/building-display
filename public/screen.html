@@ -206,7 +206,7 @@
     position: relative;
     overflow: hidden;
   }
-  .ad-slide {
+  .media-slide {
     position: absolute;
     inset: 0;
     display: none;
@@ -214,36 +214,36 @@
     justify-content: center;
     overflow: hidden;
   }
-  .ad-slide.active { display: flex; }
-  .ad-slide img  { width: 100%; height: 100%; object-fit: cover; }
-  .ad-slide video { width: 100%; height: 100%; object-fit: cover; }
+  .media-slide.active { display: flex; }
+  .media-slide img  { width: 100%; height: 100%; object-fit: cover; }
+  .media-slide video { width: 100%; height: 100%; object-fit: cover; }
 
-  .no-ads {
+  .empty-display {
     position: absolute; inset: 0;
     background: linear-gradient(160deg, #0d1b3e 0%, #1a2a5e 50%, #0a1228 100%);
     display: flex; align-items: center; justify-content: center;
     flex-direction: column;
   }
-  .no-ads-inner { text-align: center; padding: 32px; }
-  .no-ads-label {
+  .empty-display-inner { text-align: center; padding: 32px; }
+  .empty-display-label {
     font-size: 0.68rem; font-weight: 600; letter-spacing: 4px;
     color: #5bc8f5; text-transform: uppercase; margin-bottom: 18px; opacity: 0.8;
   }
-  .no-ads-main {
+  .empty-display-main {
     font-size: 1.45rem; font-weight: 300; color: #fff;
     line-height: 1.6; margin-bottom: 24px;
   }
-  .no-ads-phone {
+  .empty-display-phone {
     font-size: 1.9rem; font-weight: 700; color: #5bc8f5;
     letter-spacing: 1.5px; background: rgba(91,200,245,0.08);
     padding: 14px 28px; border-radius: 12px;
     border: 1px solid rgba(91,200,245,0.2); display: inline-block;
   }
-  .no-ads-sub { margin-top: 16px; font-size: 0.75rem; color: rgba(255,255,255,0.4); letter-spacing: 1.5px; }
+  .empty-display-sub { margin-top: 16px; font-size: 0.75rem; color: rgba(255,255,255,0.4); letter-spacing: 1.5px; }
 
-  .ad-dots { display: flex; justify-content: center; gap: 6px; padding: 8px; flex-shrink: 0; }
-  .ad-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: background 0.3s; }
-  .ad-dot.active { background: #5bc8f5; }
+  .slide-dots { display: flex; justify-content: center; gap: 6px; padding: 8px; flex-shrink: 0; }
+  .slide-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: background 0.3s; }
+  .slide-dot.active { background: #5bc8f5; }
 
   .promo-contact-bar {
     background: rgba(91,200,245,0.07);
@@ -332,13 +332,13 @@
 
   /* פרסומות */
   body.theme-pink .promo-panel { background: #fff; border: 1px solid #fce4ec; box-shadow: 0 2px 14px rgba(233,30,99,0.07); }
-  body.theme-pink .no-ads { background: linear-gradient(160deg, #fce4ec 0%, #f8bbd0 60%, #fce4ec 100%) !important; }
-  body.theme-pink .no-ads-label { color: #ad1457; letter-spacing: 4px; }
-  body.theme-pink .no-ads-main { color: #111; font-weight: 300; }
-  body.theme-pink .no-ads-phone { color: #111; background: rgba(233,30,99,0.07); border-color: rgba(233,30,99,0.2); }
-  body.theme-pink .no-ads-sub { color: #ad1457; opacity: 0.7; }
-  body.theme-pink .ad-dot { background: rgba(233,30,99,0.2); }
-  body.theme-pink .ad-dot.active { background: #e91e63; }
+  body.theme-pink .empty-display { background: linear-gradient(160deg, #fce4ec 0%, #f8bbd0 60%, #fce4ec 100%) !important; }
+  body.theme-pink .empty-display-label { color: #ad1457; letter-spacing: 4px; }
+  body.theme-pink .empty-display-main { color: #111; font-weight: 300; }
+  body.theme-pink .empty-display-phone { color: #111; background: rgba(233,30,99,0.07); border-color: rgba(233,30,99,0.2); }
+  body.theme-pink .empty-display-sub { color: #ad1457; opacity: 0.7; }
+  body.theme-pink .slide-dot { background: rgba(233,30,99,0.2); }
+  body.theme-pink .slide-dot.active { background: #e91e63; }
   body.theme-pink .promo-contact-bar { background: #111; color: #fff; }
 
   /* חדשות ישראל היום */
@@ -388,13 +388,13 @@
   body.theme-pink-ads .biz-office { background: #111; color: #fff; border: none; }
   body.theme-pink-ads .biz-item.alt .biz-office { background: #fff; color: #111; border: 1.5px solid #111; }
   body.theme-pink-ads .promo-panel { background: #fff; border: 1px solid #fce4ec; box-shadow: 0 2px 14px rgba(233,30,99,0.07); }
-  body.theme-pink-ads .no-ads { background: linear-gradient(160deg, #fce4ec 0%, #f8bbd0 60%, #fce4ec 100%) !important; }
-  body.theme-pink-ads .no-ads-label { color: #ad1457; letter-spacing: 4px; }
-  body.theme-pink-ads .no-ads-main { color: #111; font-weight: 300; }
-  body.theme-pink-ads .no-ads-phone { color: #111; background: rgba(233,30,99,0.07); border-color: rgba(233,30,99,0.2); }
-  body.theme-pink-ads .no-ads-sub { color: #ad1457; opacity: 0.7; }
-  body.theme-pink-ads .ad-dot { background: rgba(233,30,99,0.2); }
-  body.theme-pink-ads .ad-dot.active { background: #e91e63; }
+  body.theme-pink-ads .empty-display { background: linear-gradient(160deg, #fce4ec 0%, #f8bbd0 60%, #fce4ec 100%) !important; }
+  body.theme-pink-ads .empty-display-label { color: #ad1457; letter-spacing: 4px; }
+  body.theme-pink-ads .empty-display-main { color: #111; font-weight: 300; }
+  body.theme-pink-ads .empty-display-phone { color: #111; background: rgba(233,30,99,0.07); border-color: rgba(233,30,99,0.2); }
+  body.theme-pink-ads .empty-display-sub { color: #ad1457; opacity: 0.7; }
+  body.theme-pink-ads .slide-dot { background: rgba(233,30,99,0.2); }
+  body.theme-pink-ads .slide-dot.active { background: #e91e63; }
   body.theme-pink-ads .promo-contact-bar { background: #111; color: #fff; }
   body.theme-pink-ads .news-time { background: #fce4ec; color: #ad1457; font-weight: 700; }
   body.theme-pink-ads .news-item::before { content: '●'; color: #e91e63; }
@@ -427,13 +427,13 @@
   body.theme-vibrant-ads .biz-office { background: #111; color: #fff; border: none; }
   body.theme-vibrant-ads .biz-item.alt .biz-office { background: #fff; color: #111; border: 1.5px solid #111; }
   body.theme-vibrant-ads .promo-panel { background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 14px rgba(0,0,0,0.07); }
-  body.theme-vibrant-ads .no-ads { background: #fff !important; }
-  body.theme-vibrant-ads .no-ads-label { color: #999; }
-  body.theme-vibrant-ads .no-ads-main { color: #111; font-weight: 300; }
-  body.theme-vibrant-ads .no-ads-phone { color: #111; background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); }
-  body.theme-vibrant-ads .no-ads-sub { color: rgba(0,0,0,0.35); }
-  body.theme-vibrant-ads .ad-dot { background: rgba(0,0,0,0.15); }
-  body.theme-vibrant-ads .ad-dot.active { background: #111; }
+  body.theme-vibrant-ads .empty-display { background: #fff !important; }
+  body.theme-vibrant-ads .empty-display-label { color: #999; }
+  body.theme-vibrant-ads .empty-display-main { color: #111; font-weight: 300; }
+  body.theme-vibrant-ads .empty-display-phone { color: #111; background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); }
+  body.theme-vibrant-ads .empty-display-sub { color: rgba(0,0,0,0.35); }
+  body.theme-vibrant-ads .slide-dot { background: rgba(0,0,0,0.15); }
+  body.theme-vibrant-ads .slide-dot.active { background: #111; }
   body.theme-vibrant-ads .promo-contact-bar { background: #111; color: #fff; }
   body.theme-vibrant-ads .news-time { background: #fbbf24; color: #111; font-weight: 700; }
   body.theme-vibrant-ads .news-item::before { content: '●'; color: #fbbf24; }
@@ -500,13 +500,13 @@
 
   /* פרסומות — לבן, ללא רקע כהה */
   body.theme-vibrant .promo-panel { background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 14px rgba(0,0,0,0.07); }
-  body.theme-vibrant .no-ads { background: #fff !important; }
-  body.theme-vibrant .no-ads-label { color: #999; }
-  body.theme-vibrant .no-ads-main { color: #111; font-weight: 300; }
-  body.theme-vibrant .no-ads-phone { color: #111; background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); letter-spacing: 1.5px; }
-  body.theme-vibrant .no-ads-sub { color: rgba(0,0,0,0.35); }
-  body.theme-vibrant .ad-dot { background: rgba(0,0,0,0.15); }
-  body.theme-vibrant .ad-dot.active { background: #111; }
+  body.theme-vibrant .empty-display { background: #fff !important; }
+  body.theme-vibrant .empty-display-label { color: #999; }
+  body.theme-vibrant .empty-display-main { color: #111; font-weight: 300; }
+  body.theme-vibrant .empty-display-phone { color: #111; background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); letter-spacing: 1.5px; }
+  body.theme-vibrant .empty-display-sub { color: rgba(0,0,0,0.35); }
+  body.theme-vibrant .slide-dot { background: rgba(0,0,0,0.15); }
+  body.theme-vibrant .slide-dot.active { background: #111; }
   body.theme-vibrant .promo-contact-bar { background: #111; color: #fff; }
 
   /* כותרות מדיה — צבעי לוגו מקוריים */
@@ -784,17 +784,17 @@
   <!-- פרסומות -->
   <div class="promo-panel">
     <div class="promo-content">
-      <div id="promoPlaceholder" class="no-ads">
-        <div class="no-ads-inner">
-          <div class="no-ads-label">מקום פרסום</div>
-          <div class="no-ads-main">פרסמו את העסק שלכם<br>על מסך הבניין</div>
-          <div class="no-ads-phone">052-6060848</div>
-          <div class="no-ads-sub">לפרסום כאן חייגו</div>
+      <div id="promoPlaceholder" class="empty-display">
+        <div class="empty-display-inner">
+          <div class="empty-display-label">מקום פרסום</div>
+          <div class="empty-display-main">פרסמו את העסק שלכם<br>על מסך הבניין</div>
+          <div class="empty-display-phone">052-6060848</div>
+          <div class="empty-display-sub">לפרסום כאן חייגו</div>
         </div>
       </div>
-      <div id="adSlides"></div>
+      <div id="slideContainer"></div>
     </div>
-    <div class="ad-dots" id="adDots"></div>
+    <div class="slide-dots" id="slideDots"></div>
     <div class="promo-contact-bar">לפרסום העסק שלכם על מסך הבניין ● 052-6060848</div>
   </div>
 
@@ -1065,8 +1065,8 @@
     renderAds();
   }
   function renderAds() {
-    const container = document.getElementById('adSlides');
-    const dots = document.getElementById('adDots');
+    const container = document.getElementById('slideContainer');
+    const dots = document.getElementById('slideDots');
     const placeholder = document.getElementById('promoPlaceholder');
     if (!adsData.length) {
       container.innerHTML = '';
@@ -1076,14 +1076,14 @@
     }
     placeholder.style.display = 'none';
     container.innerHTML = adsData.map((ad, i) => `
-      <div class="ad-slide ${i===0?'active':''}" id="ad-${i}">
+      <div class="media-slide ${i===0?'active':''}" id="ms-${i}">
         ${ad.type==='video'
           ? `<video src="${ad.url}" autoplay muted loop></video>`
           : `<img src="${ad.url}" alt="${ad.title}">`}
       </div>
     `).join('');
     dots.innerHTML = adsData.map((_,i) =>
-      `<div class="ad-dot ${i===0?'active':''}" id="dot-${i}"></div>`).join('');
+      `<div class="slide-dot ${i===0?'active':''}" id="dot-${i}"></div>`).join('');
     adIndex = 0;
     if (adTimer) clearTimeout(adTimer);
     scheduleNext();
@@ -1091,10 +1091,10 @@
   function scheduleNext() {
     if (!adsData.length) return;
     adTimer = setTimeout(() => {
-      document.getElementById('ad-'+adIndex)?.classList.remove('active');
+      document.getElementById('ms-'+adIndex)?.classList.remove('active');
       document.getElementById('dot-'+adIndex)?.classList.remove('active');
       adIndex = (adIndex+1) % adsData.length;
-      document.getElementById('ad-'+adIndex)?.classList.add('active');
+      document.getElementById('ms-'+adIndex)?.classList.add('active');
       document.getElementById('dot-'+adIndex)?.classList.add('active');
       scheduleNext();
     }, (adsData[adIndex].duration||6)*1000);

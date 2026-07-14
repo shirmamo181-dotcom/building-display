@@ -156,7 +156,7 @@ app.get('/api/me', (req, res) => {
   res.json({ role: null });
 });
 
-// --- חדשות ישראל היום ---
+// --- חדשות (Ynet RSS) ---
 let ilHayomCache = [], ilHayomCacheTime = 0;
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
@@ -169,47 +169,40 @@ async function fetchOgImage(url) {
     return m ? m[1] : '';
   } catch(e) { return ''; }
 }
-async function fetchIsraelHayom() {
-  try {
-    const proxyUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.israelhayom.co.il/rss.xml') + '&count=10';
-    const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
-    const data = await r.json();
-    if (data.status !== 'ok' || !data.items?.length) throw new Error('rss2json returned: ' + data.status);
-    const items = data.items.map(i => ({
-      title: i.title || '',
-      link: i.link || '',
-      pubDate: i.pubDate || '',
-      image: i.thumbnail || i.enclosure?.link || ''
-    }));
-    // Fill missing images from og:image
-    const images = await Promise.all(items.map(i => (!i.image && i.link) ? fetchOgImage(i.link) : Promise.resolve(i.image)));
-    items.forEach((item, idx) => { item.image = images[idx]; });
-    ilHayomCache = items; ilHayomCacheTime = Date.now();
-    console.log('ישראל היום: נטענו', items.length, 'כתבות');
-  } catch(e) { console.error('שגיאה ישראל היום:', e.message); }
-}
-fetchIsraelHayom();
-setInterval(fetchIsraelHayom, 10 * 60 * 1000);
-app.get('/api/israelhayom', async (req, res) => {
-  if (Date.now() - ilHayomCacheTime > 5 * 60 * 1000) await fetchIsraelHayom();
-  res.json(ilHayomCache);
-});
 
-// --- חדשות ynet ---
+// Ynet RSS עובד מ-Railway (ישראל היום חוסמת)
 let newsCache = [], newsCacheTime = 0;
 async function fetchNews() {
   try {
-    const r = await fetch('https://www.ynet.co.il/Integration/StoryRss2.xml', { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const r = await fetch('https://www.ynet.co.il/Integration/StoryRss2.xml', { headers: { 'User-Agent': UA } });
     const xml = await r.text();
     const result = await xml2js.parseStringPromise(xml);
-    newsCache = result.rss.channel[0].item.slice(0, 15).map(i => ({ title: i.title[0], pubDate: i.pubDate?.[0] || '' }));
+    const items = result.rss.channel[0].item.slice(0, 10);
+    newsCache = items.map(i => ({
+      title: i.title[0],
+      link: i.link?.[0] || '',
+      pubDate: i.pubDate?.[0] || '',
+      image: ''
+    }));
     newsCacheTime = Date.now();
+    // fetch og:images in background (don't block)
+    Promise.all(newsCache.map((item, idx) =>
+      item.link ? fetchOgImage(item.link).then(img => { newsCache[idx].image = img; }) : Promise.resolve()
+    )).catch(() => {});
+    console.log('חדשות ynet: נטענו', newsCache.length, 'כתבות');
   } catch(e) { console.log('שגיאה ynet:', e.message); }
 }
 fetchNews();
-setInterval(fetchNews, 2 * 60 * 1000);
+setInterval(fetchNews, 5 * 60 * 1000);
+
+// שני endpoint-ים מגישים את אותו המידע
+app.get('/api/israelhayom', async (req, res) => {
+  if (Date.now() - newsCacheTime > 5 * 60 * 1000) await fetchNews();
+  ilHayomCache = newsCache; ilHayomCacheTime = newsCacheTime;
+  res.json(ilHayomCache);
+});
 app.get('/api/news', async (req, res) => {
-  if (Date.now() - newsCacheTime > 2 * 60 * 1000) await fetchNews();
+  if (Date.now() - newsCacheTime > 5 * 60 * 1000) await fetchNews();
   res.json(newsCache);
 });
 

@@ -278,15 +278,15 @@ async function loadBuildings() {
           ${b.canManageAds ? '✓ ריטיינר' : '○ חינמי'}
         </span>
       </div>
-      <div class="building-actions">
+      <div class="building-actions" data-bid="${b.id}" data-name="${b.name.replace(/"/g,'&quot;')}" data-email="${(b.email||'').replace(/"/g,'&quot;')}">
         <button class="btn-action btn-enter"  onclick="location.href='/admin/${b.id}'">◈ כניסה לדשבורד</button>
         <button class="btn-action btn-screen" onclick="window.open('/screen/${b.id}','_blank')">📺 מסך תצוגה</button>
-        <button class="btn-action btn-ads"    onclick="openAdsModal('${b.id}','${b.name}')">📢 ניהול פרסומות</button>
+        <button class="btn-action btn-ads"    onclick="openAdsModalById('${b.id}')">📢 ניהול פרסומות</button>
         <button class="btn-action btn-toggle" onclick="toggleAds('${b.id}',${!b.canManageAds})">
           ${b.canManageAds ? '⬇ הסר ריטיינר' : '⬆ הפעל ריטיינר'}
         </button>
-        <button class="btn-action btn-edit-b" onclick="openEditModal('${b.id}','${b.name}','${b.email||''}')">✏️ עריכה</button>
-        <button class="btn-action btn-del-b"  onclick="deleteBuilding('${b.id}','${b.name}')">🗑 מחק</button>
+        <button class="btn-action btn-edit-b" onclick="openEditModalById('${b.id}')">✏️ עריכה</button>
+        <button class="btn-action btn-del-b"  onclick="deleteBuildingById('${b.id}')">🗑 מחק</button>
       </div>
     </div>
   `).join('');
@@ -347,6 +347,24 @@ async function saveEdit() {
   });
   closeEditModal();
   loadBuildings();
+}
+
+// --- עוזרים לקריאת data attributes (פותר בעיית גרשיים בשמות בניין) ---
+function getBuildingData(bid) {
+  const el = document.querySelector(`.building-actions[data-bid="${bid}"]`);
+  return el ? { name: el.dataset.name, email: el.dataset.email } : { name: bid, email: '' };
+}
+function openAdsModalById(bid) {
+  const { name } = getBuildingData(bid);
+  openAdsModal(bid, name);
+}
+function openEditModalById(bid) {
+  const { name, email } = getBuildingData(bid);
+  openEditModal(bid, name, email);
+}
+function deleteBuildingById(bid) {
+  const { name } = getBuildingData(bid);
+  deleteBuilding(bid, name);
 }
 
 // --- מודל פרסומות ---

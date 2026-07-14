@@ -200,6 +200,9 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    align-self: center;
+    width: 100%;
+    aspect-ratio: 16/9;
   }
   .promo-content {
     flex: 1;
@@ -215,8 +218,8 @@
     overflow: hidden;
   }
   .media-slide.active { display: flex; }
-  .media-slide img  { width: 100%; height: 100%; object-fit: contain; background: #000; }
-  .media-slide video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+  .media-slide img  { width: 100%; height: 100%; object-fit: cover; }
+  .media-slide video { width: 100%; height: 100%; object-fit: cover; }
 
   .empty-display {
     position: absolute; inset: 0;

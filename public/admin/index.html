@@ -420,9 +420,12 @@ function renderAdsArea() {
         </div>
         <label class="file-input-label">
           📁 לחץ לבחירת תמונה או סרטון
-          <input type="file" id="adFile" accept="image/*,video/mp4" onchange="document.getElementById('fileSelected').textContent=this.files[0]?.name||''">
+          <input type="file" id="adFile" accept="image/*,video/mp4" onchange="document.getElementById('fileSelected').textContent=this.files[0]?.name||'';document.getElementById('fileClearBtn').style.display=this.files[0]?'inline-block':'none'">
         </label>
-        <div id="fileSelected" style="color:#4a9eff;font-size:0.9rem;margin-bottom:12px"></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div id="fileSelected" style="color:#4a9eff;font-size:0.9rem;flex:1"></div>
+          <button id="fileClearBtn" style="display:none;background:transparent;color:#ff6b6b;border:1px solid #ff6b6b;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:0.8rem;font-family:inherit" onclick="clearAdFile()">✕ הסר</button>
+        </div>
         <button class="btn-add" onclick="uploadAd()">+ העלה פרסומת</button>
       </div>`;
   } else {
@@ -566,11 +569,29 @@ async function loadAds() {
           <small>${a.duration} שניות | ${a.active ? 'פעיל' : 'מושהה'}${a.start_date || a.end_date ? ' | ' + (a.start_date||'—') + ' עד ' + (a.end_date||'∞') : ''}</small>
         </div>
         ${canManageAds && !a.is_global ? `
+          <button class="btn-edit" onclick="toggleAdEdit(${a.id})">✏️ ערוך</button>
           <button class="toggle-btn ${a.active ? 'on' : 'off'}" onclick="toggleAd(${a.id},${!a.active})">
             ${a.active ? '✓ פעיל' : '⏸ מושהה'}
           </button>
           <button class="btn-del" onclick="deleteAd(${a.id})">מחק</button>
         ` : ''}
+      </div>
+      <div id="adedit-${a.id}" style="display:none;margin-top:12px;padding:12px;background:#12122a;border-radius:10px">
+        <div class="form-row" style="margin-bottom:8px">
+          <input type="text" id="aet-${a.id}" value="${a.title.replace(/"/g,'&quot;')}" placeholder="כותרת">
+          <input type="number" id="aed-${a.id}" value="${a.duration}" placeholder="שניות" style="max-width:100px">
+          <input type="date" id="aes-${a.id}" value="${a.start_date||''}" style="max-width:150px">
+          <input type="date" id="aee-${a.id}" value="${a.end_date||''}" style="max-width:150px">
+        </div>
+        <div class="form-row" style="margin-bottom:10px">
+          <input type="text" id="aean-${a.id}" value="${(a.advertiser_name||'').replace(/"/g,'&quot;')}" placeholder="שם איש קשר">
+          <input type="tel" id="aeap-${a.id}" value="${(a.advertiser_phone||'').replace(/"/g,'&quot;')}" placeholder="טלפון" style="max-width:150px">
+          <input type="email" id="aeae-${a.id}" value="${(a.advertiser_email||'').replace(/"/g,'&quot;')}" placeholder="מייל">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-save" onclick="saveAdEdit(${a.id})">שמור</button>
+          <button class="btn-cancel" onclick="toggleAdEdit(${a.id})">ביטול</button>
+        </div>
       </div>
     </div>
   `}).join('');
@@ -629,6 +650,33 @@ async function toggleAd(id, active) {
 async function deleteAd(id) {
   if (!confirm('למחוק פרסומת זו?')) return;
   await fetch('/api/' + BID + '/ads/' + id, { method: 'DELETE' });
+  loadAds();
+}
+
+function clearAdFile() {
+  document.getElementById('adFile').value = '';
+  document.getElementById('fileSelected').textContent = '';
+  document.getElementById('fileClearBtn').style.display = 'none';
+}
+
+function toggleAdEdit(id) {
+  const el = document.getElementById('adedit-' + id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveAdEdit(id) {
+  const body = {
+    title:            document.getElementById('aet-'  + id)?.value.trim(),
+    duration:         document.getElementById('aed-'  + id)?.value,
+    start_date:       document.getElementById('aes-'  + id)?.value || null,
+    end_date:         document.getElementById('aee-'  + id)?.value || null,
+    advertiser_name:  document.getElementById('aean-' + id)?.value.trim(),
+    advertiser_phone: document.getElementById('aeap-' + id)?.value.trim(),
+    advertiser_email: document.getElementById('aeae-' + id)?.value.trim(),
+  };
+  await fetch('/api/' + BID + '/ads/' + id, {
+    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+  });
   loadAds();
 }
 

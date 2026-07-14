@@ -246,13 +246,24 @@
       </div>
       <label class="file-input-label">
         📁 בחר תמונה או סרטון (16:9)
-        <input type="file" id="gAdFile" accept="image/*,video/mp4" onchange="document.getElementById('gFileSelected').textContent=this.files[0]?.name||''">
+        <input type="file" id="gAdFile" accept="image/*,video/mp4" onchange="document.getElementById('gFileSelected').textContent=this.files[0]?.name||'';document.getElementById('gFileClearBtn').style.display=this.files[0]?'inline-block':'none'">
       </label>
-      <div id="gFileSelected" style="color:#7eb8d4;font-size:0.85rem;margin-bottom:10px"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div id="gFileSelected" style="color:#7eb8d4;font-size:0.85rem;flex:1"></div>
+        <button id="gFileClearBtn" style="display:none;background:transparent;color:#ff6b6b;border:1px solid #ff6b6b;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:0.8rem;font-family:inherit" onclick="clearGlobalFile()">✕ הסר</button>
+      </div>
       <button class="btn-add" onclick="uploadGlobalAd()">+ שדר לבניינים הנבחרים</button>
       <div id="gUploadMsg" style="margin-top:10px;font-size:0.9rem"></div>
     </div>
     <div id="globalAdsList"></div>
+
+    <div style="margin-top:32px">
+      <div class="section-title" style="font-size:1rem;display:flex;align-items:center;justify-content:space-between">
+        <span>📋 כל הפרסומות לפי בניין</span>
+        <button class="btn-action btn-toggle" style="font-size:0.8rem;padding:6px 14px" onclick="loadAllAdsByBuilding()">רענן</button>
+      </div>
+      <div id="allAdsByBuilding"></div>
+    </div>
   </div>
 
   <!-- הוספת בניין -->
@@ -290,9 +301,12 @@
       </div>
       <label class="file-input-label">
         📁 בחר תמונה או סרטון
-        <input type="file" id="mAdFile" accept="image/*,video/mp4" onchange="document.getElementById('mFileSelected').textContent=this.files[0]?.name||''">
+        <input type="file" id="mAdFile" accept="image/*,video/mp4" onchange="document.getElementById('mFileSelected').textContent=this.files[0]?.name||'';document.getElementById('mFileClearBtn').style.display=this.files[0]?'inline-block':'none'">
       </label>
-      <div id="mFileSelected" style="color:#7eb8d4;font-size:0.85rem;margin-bottom:10px"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div id="mFileSelected" style="color:#7eb8d4;font-size:0.85rem;flex:1"></div>
+        <button id="mFileClearBtn" style="display:none;background:transparent;color:#ff6b6b;border:1px solid #ff6b6b;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:0.8rem;font-family:inherit" onclick="clearModalFile()">✕ הסר</button>
+      </div>
       <button class="btn-add" onclick="uploadModalAd()">+ העלה פרסומת</button>
     </div>
     <div id="adsModalList"></div>
@@ -467,33 +481,85 @@ async function loadModalAds() {
   const data = await fetch('/api/superadmin/buildings/' + currentAdsBid + '/ads').then(r => r.json()).catch(() => []);
   const el = document.getElementById('adsModalList');
   if (!data.length) { el.innerHTML = '<div class="empty-state" style="padding:20px">אין פרסומות עדיין</div>'; return; }
-  el.innerHTML = data.map((a, i) => `
-    <div class="media-row">
-      <div style="display:flex;flex-direction:column;gap:3px">
-        ${!a.is_global ? `
-          <button class="sort-btn" onclick="reorderModalAd(${a.id},'up')" ${i===0?'disabled':''}>▲</button>
-          <button class="sort-btn" onclick="reorderModalAd(${a.id},'down')" ${i===data.length-1?'disabled':''}>▼</button>
-        ` : '<div style="width:24px"></div>'}
+  const locals = data.filter(a => !a.is_global);
+  el.innerHTML = data.map((a, i) => {
+    const localIdx = locals.indexOf(a);
+    const isFirst = localIdx === 0;
+    const isLast = localIdx === locals.length - 1;
+    return `
+    <div class="media-row" id="mrow-${a.id}" style="flex-direction:column;align-items:stretch;padding:10px 0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;flex-direction:column;gap:3px">
+          ${!a.is_global ? `
+            <button class="sort-btn" onclick="reorderModalAd(${a.id},'up')" ${isFirst?'disabled':''}>▲</button>
+            <button class="sort-btn" onclick="reorderModalAd(${a.id},'down')" ${isLast?'disabled':''}>▼</button>
+          ` : '<div style="width:26px"></div>'}
+        </div>
+        ${a.type === 'video'
+          ? `<video class="media-thumb" src="${a.url}" muted></video>`
+          : a.url ? `<img class="media-thumb" src="${a.url}" alt="">` : `<div class="media-thumb"></div>`}
+        <div class="ad-info" style="flex:1">
+          <strong>${a.title} ${a.is_global ? '<span class="global-badge" onclick="showGlobalBuildingStatus('+a.id+')">🌐 גלובלי</span>' : ''}</strong>
+          <small>${a.duration}שנ' | ${a.active ? '✓ פעיל' : '⏸ מושהה'}${a.advertiser_name ? ' | ' + a.advertiser_name : ''}${a.advertiser_phone ? ' | ' + a.advertiser_phone : ''}</small>
+          ${a.start_date || a.end_date ? `<small style="display:block;color:#666">${a.start_date||'—'} עד ${a.end_date||'—'}</small>` : ''}
+        </div>
+        <button class="btn-action btn-edit-b" style="padding:5px 10px;font-size:0.8rem" onclick="toggleModalEdit(${a.id})">✏️ ערוך</button>
+        ${a.is_global ? `
+          <button class="btn-action btn-toggle" style="padding:5px 10px;font-size:0.8rem"
+            onclick="toggleGlobalAdForBuilding(${a.id},${!a.active})">${a.active ? 'השהה' : 'הפעל'}</button>
+        ` : `
+          <button class="btn-action btn-toggle" style="padding:5px 10px;font-size:0.8rem"
+            onclick="toggleModalAd(${a.id},${!a.active})">${a.active ? 'השהה' : 'הפעל'}</button>
+          <button class="btn-del-b" style="padding:5px 10px;font-size:0.8rem;border-radius:6px;cursor:pointer;font-family:inherit"
+            onclick="deleteModalAd(${a.id})">מחק</button>
+        `}
       </div>
-      ${a.type === 'video'
-        ? `<video class="media-thumb" src="${a.url}" muted></video>`
-        : a.url ? `<img class="media-thumb" src="${a.url}" alt="">` : `<div class="media-thumb"></div>`}
-      <div class="ad-info" style="flex:1">
-        <strong>${a.title} ${a.is_global ? '<span class="global-badge" onclick="showGlobalBuildingStatus('+a.id+')">🌐 גלובלי</span>' : ''}</strong>
-        <small>${a.duration}שנ' | ${a.active ? '✓ פעיל' : '⏸ מושהה'}${a.advertiser_name ? ' | ' + a.advertiser_name : ''}${a.advertiser_phone ? ' | ' + a.advertiser_phone : ''}</small>
-        ${a.start_date || a.end_date ? `<small style="display:block;color:#666">${a.start_date||'—'} עד ${a.end_date||'—'}</small>` : ''}
+      <div id="medit-${a.id}" style="display:none;margin-top:10px;padding:12px;background:#12122a;border-radius:10px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <input type="text" id="met-${a.id}" value="${a.title.replace(/"/g,'&quot;')}" placeholder="כותרת"
+            style="padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+          <input type="number" id="med-${a.id}" value="${a.duration}" placeholder="שניות"
+            style="padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+          <input type="date" id="mes-${a.id}" value="${a.start_date||''}"
+            style="padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit">
+          <input type="date" id="mee-${a.id}" value="${a.end_date||''}"
+            style="padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit">
+          <input type="text" id="mean-${a.id}" value="${(a.advertiser_name||'').replace(/"/g,'&quot;')}" placeholder="שם איש קשר"
+            style="padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+          <input type="tel" id="meap-${a.id}" value="${(a.advertiser_phone||'').replace(/"/g,'&quot;')}" placeholder="טלפון"
+            style="padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+          <input type="email" id="meae-${a.id}" value="${(a.advertiser_email||'').replace(/"/g,'&quot;')}" placeholder="מייל"
+            style="grid-column:span 2;padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-add" style="padding:7px 16px;font-size:0.85rem" onclick="saveModalEdit(${a.id},${a.is_global})">💾 שמור</button>
+          <button onclick="toggleModalEdit(${a.id})" style="background:transparent;border:1px solid #444;color:#aaa;border-radius:6px;padding:7px 14px;cursor:pointer;font-family:inherit;font-size:0.85rem">ביטול</button>
+        </div>
       </div>
-      ${a.is_global ? `
-        <button class="btn-action btn-toggle" style="padding:5px 12px;font-size:0.8rem"
-          onclick="toggleGlobalAdForBuilding(${a.id},${!a.active})">${a.active ? 'השהה כאן' : 'הפעל כאן'}</button>
-      ` : `
-        <button class="btn-action btn-toggle" style="padding:5px 12px;font-size:0.8rem"
-          onclick="toggleModalAd(${a.id},${!a.active})">${a.active ? 'השהה' : 'הפעל'}</button>
-        <button class="btn-del-b" style="padding:5px 12px;font-size:0.8rem;border-radius:6px;cursor:pointer;font-family:inherit"
-          onclick="deleteModalAd(${a.id})">מחק</button>
-      `}
     </div>
-  `).join('');
+  `}).join('');
+}
+
+function toggleModalEdit(id) {
+  const el = document.getElementById('medit-' + id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveModalEdit(adId, isGlobal) {
+  const body = {
+    title:            document.getElementById('met-' + adId)?.value.trim(),
+    duration:         document.getElementById('med-' + adId)?.value,
+    start_date:       document.getElementById('mes-' + adId)?.value || null,
+    end_date:         document.getElementById('mee-' + adId)?.value || null,
+    advertiser_name:  document.getElementById('mean-'+ adId)?.value.trim(),
+    advertiser_phone: document.getElementById('meap-'+ adId)?.value.trim(),
+    advertiser_email: document.getElementById('meae-'+ adId)?.value.trim(),
+  };
+  const url = isGlobal
+    ? '/api/superadmin/global-ads/' + adId
+    : '/api/superadmin/buildings/' + currentAdsBid + '/ads/' + adId;
+  await fetch(url, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  loadModalAds();
 }
 
 async function uploadModalAd() {
@@ -575,6 +641,7 @@ async function loadGlobalAdsTab() {
     </label>
   `).join('');
   loadGlobalAdsList();
+  loadAllAdsByBuilding();
 }
 
 async function loadGlobalAdsList() {
@@ -603,12 +670,35 @@ async function loadGlobalAdsList() {
               ${a.advertiser_phone ? ' | 📞 ' + a.advertiser_phone : ''}
             </div>
           </div>
-          <button class="btn-action btn-toggle" style="padding:5px 14px;font-size:0.82rem"
-            onclick="toggleGlobalAdGlobal(${a.id},${!a.active})">${a.active ? '⏸ השהה הכל' : '▶ הפעל הכל'}</button>
+          <button class="btn-action btn-edit-b" style="padding:5px 10px;font-size:0.8rem" onclick="toggleGlobalEdit(${a.id})">✏️ ערוך</button>
+          <button class="btn-action btn-toggle" style="padding:5px 12px;font-size:0.82rem"
+            onclick="toggleGlobalAdGlobal(${a.id},${!a.active})">${a.active ? '⏸ השהה' : '▶ הפעל'}</button>
           <button class="btn-del-b" style="padding:5px 12px;font-size:0.8rem;border-radius:6px;cursor:pointer;font-family:inherit"
             onclick="deleteGlobalAd(${a.id})">מחק</button>
         </div>
-        ${chips ? `<div style="font-size:0.78rem;color:#666;margin-bottom:6px">לחץ על בניין לשינוי סטטוס:</div><div class="building-status-row">${chips}</div>` : '<div style="font-size:0.8rem;color:#555">לא משויך לבניינים</div>'}
+        <div id="gedit-${a.id}" style="display:none;margin-top:10px;padding:12px;background:#12122a;border-radius:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <input type="text" id="get-${a.id}" value="${a.title.replace(/"/g,'&quot;')}" placeholder="כותרת"
+              style="padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+            <input type="number" id="ged-${a.id}" value="${a.duration}" placeholder="שניות"
+              style="padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+            <input type="date" id="ges-${a.id}" value="${a.start_date||''}"
+              style="padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit">
+            <input type="date" id="gee-${a.id}" value="${a.end_date||''}"
+              style="padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit">
+            <input type="text" id="gean-${a.id}" value="${(a.advertiser_name||'').replace(/"/g,'&quot;')}" placeholder="שם איש קשר"
+              style="padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+            <input type="tel" id="geap-${a.id}" value="${(a.advertiser_phone||'').replace(/"/g,'&quot;')}" placeholder="טלפון"
+              style="padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+            <input type="email" id="geae-${a.id}" value="${(a.advertiser_email||'').replace(/"/g,'&quot;')}" placeholder="מייל"
+              style="grid-column:span 2;padding:8px 10px;border-radius:6px;border:1px solid #333;background:#0f0f1e;color:#fff;font-family:inherit;text-align:right">
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-add" style="padding:7px 16px;font-size:0.85rem" onclick="saveGlobalEdit(${a.id})">💾 שמור</button>
+            <button onclick="toggleGlobalEdit(${a.id})" style="background:transparent;border:1px solid #444;color:#aaa;border-radius:6px;padding:7px 14px;cursor:pointer;font-family:inherit;font-size:0.85rem">ביטול</button>
+          </div>
+        </div>
+        ${chips ? `<div style="font-size:0.78rem;color:#666;margin:10px 0 4px">לחץ על בניין לשינוי סטטוס:</div><div class="building-status-row">${chips}</div>` : '<div style="font-size:0.8rem;color:#555;margin-top:8px">לא משויך לבניינים</div>'}
       </div>
     `;
   }).join('');
@@ -678,6 +768,62 @@ async function toggleGlobalBuildingChip(gid, bid, active) {
 async function deleteGlobalAd(gid) {
   if (!confirm('למחוק פרסומת גלובלית זו?\nהיא תוסר מכל הבניינים.')) return;
   await fetch('/api/superadmin/global-ads/' + gid, { method: 'DELETE' });
+  loadGlobalAdsList();
+}
+
+function clearModalFile() {
+  document.getElementById('mAdFile').value = '';
+  document.getElementById('mFileSelected').textContent = '';
+  document.getElementById('mFileClearBtn').style.display = 'none';
+}
+function clearGlobalFile() {
+  document.getElementById('gAdFile').value = '';
+  document.getElementById('gFileSelected').textContent = '';
+  document.getElementById('gFileClearBtn').style.display = 'none';
+}
+
+async function loadAllAdsByBuilding() {
+  const el = document.getElementById('allAdsByBuilding');
+  el.innerHTML = '<div style="color:#555;padding:16px">טוען...</div>';
+  const data = await fetch('/api/superadmin/all-ads').then(r => r.json()).catch(() => []);
+  if (!data.length) { el.innerHTML = '<div class="empty-state">אין פרסומות לאף בניין</div>'; return; }
+  el.innerHTML = data.map(b => `
+    <div style="background:#12122a;border:1px solid #2a2a5a;border-radius:12px;padding:16px;margin-bottom:12px">
+      <div style="font-size:0.95rem;font-weight:700;color:#a0a0ff;margin-bottom:10px">🏢 ${b.name}</div>
+      ${b.ads.map(a => `
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #1a1a3a">
+          ${a.type==='video'
+            ? `<video style="width:54px;height:38px;object-fit:cover;border-radius:5px;background:#333" src="${a.url}" muted></video>`
+            : a.url ? `<img style="width:54px;height:38px;object-fit:cover;border-radius:5px" src="${a.url}" alt="">` : `<div style="width:54px;height:38px;background:#333;border-radius:5px"></div>`}
+          <div style="flex:1">
+            <div style="font-size:0.9rem;font-weight:600">${a.title}</div>
+            <div style="font-size:0.78rem;color:#888">${a.duration}שנ' | ${a.active?'✓ פעיל':'⏸ מושהה'}${a.start_date?' | '+a.start_date+' עד '+(a.end_date||'∞'):''}${a.advertiser_name?' | '+a.advertiser_name:''}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+// עריכת פרסומת גלובלית
+function toggleGlobalEdit(gid) {
+  const el = document.getElementById('gedit-' + gid);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveGlobalEdit(gid) {
+  const body = {
+    title:            document.getElementById('get-' + gid)?.value.trim(),
+    duration:         document.getElementById('ged-' + gid)?.value,
+    start_date:       document.getElementById('ges-' + gid)?.value || null,
+    end_date:         document.getElementById('gee-' + gid)?.value || null,
+    advertiser_name:  document.getElementById('gean-'+ gid)?.value.trim(),
+    advertiser_phone: document.getElementById('geap-'+ gid)?.value.trim(),
+    advertiser_email: document.getElementById('geae-'+ gid)?.value.trim(),
+  };
+  await fetch('/api/superadmin/global-ads/' + gid, {
+    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+  });
   loadGlobalAdsList();
 }
 

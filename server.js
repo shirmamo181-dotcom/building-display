@@ -368,8 +368,18 @@ app.post('/api/:bid/ads', requireAdsAuth, upload.single('file'), async (req, res
   res.json({ id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration, active: r.active });
 });
 app.put('/api/:bid/ads/:id', requireAdsAuth, async (req, res) => {
-  await pool.query('UPDATE ads SET active=$1 WHERE id=$2 AND building_id=$3',
-    [req.body.active === 'true', req.params.id, req.params.bid]);
+  const { active, title, duration, start_date, end_date, advertiser_name, advertiser_phone, advertiser_email } = req.body;
+  if (title !== undefined) {
+    await pool.query(
+      `UPDATE ads SET title=$1, duration=$2, start_date=$3, end_date=$4,
+       advertiser_name=$5, advertiser_phone=$6, advertiser_email=$7 WHERE id=$8 AND building_id=$9`,
+      [title||'', parseInt(duration)||6, start_date||null, end_date||null,
+       advertiser_name||'', advertiser_phone||'', advertiser_email||'', req.params.id, req.params.bid]
+    );
+  } else {
+    await pool.query('UPDATE ads SET active=$1 WHERE id=$2 AND building_id=$3',
+      [active === 'true' || active === true, req.params.id, req.params.bid]);
+  }
   res.json({ ok: true });
 });
 app.delete('/api/:bid/ads/:id', requireAdsAuth, async (req, res) => {
@@ -522,8 +532,18 @@ app.post('/api/superadmin/buildings/:id/ads', requireSuper, upload.single('file'
   res.json({ id: r.id, title: r.title, type: r.type, url: r.url, duration: r.duration, active: r.active });
 });
 app.put('/api/superadmin/buildings/:id/ads/:adId', requireSuper, async (req, res) => {
-  await pool.query('UPDATE ads SET active=$1 WHERE id=$2 AND building_id=$3',
-    [req.body.active === 'true', req.params.adId, req.params.id]);
+  const { active, title, duration, start_date, end_date, advertiser_name, advertiser_phone, advertiser_email } = req.body;
+  if (title !== undefined) {
+    await pool.query(
+      `UPDATE ads SET title=$1, duration=$2, start_date=$3, end_date=$4,
+       advertiser_name=$5, advertiser_phone=$6, advertiser_email=$7 WHERE id=$8 AND building_id=$9`,
+      [title||'', parseInt(duration)||6, start_date||null, end_date||null,
+       advertiser_name||'', advertiser_phone||'', advertiser_email||'', req.params.adId, req.params.id]
+    );
+  } else {
+    await pool.query('UPDATE ads SET active=$1 WHERE id=$2 AND building_id=$3',
+      [active === 'true' || active === true, req.params.adId, req.params.id]);
+  }
   res.json({ ok: true });
 });
 app.delete('/api/superadmin/buildings/:id/ads/:adId', requireSuper, async (req, res) => {
@@ -580,10 +600,10 @@ app.post('/api/superadmin/global-ads', requireSuper, upload.single('file'), asyn
   );
   // assign to buildings
   const buildingIds = req.body.building_ids ? JSON.parse(req.body.building_ids) : [];
-  for (const bid of buildingIds) {
+  for (let i = 0; i < buildingIds.length; i++) {
     await pool.query(
-      'INSERT INTO global_ad_buildings (id, global_ad_id, building_id) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
-      [Date.now() + Math.random(), id, bid]
+      'INSERT INTO global_ad_buildings (id, global_ad_id, building_id) VALUES ($1,$2,$3) ON CONFLICT (global_ad_id, building_id) DO NOTHING',
+      [id + i + 1, id, buildingIds[i]]
     );
   }
   const r = rows[0];
@@ -624,6 +644,22 @@ app.get('/api/superadmin/global-ads/:id/buildings', requireSuper, async (req, re
      FROM global_ad_buildings gab JOIN buildings b ON b.id=gab.building_id
      WHERE gab.global_ad_id=$1`, [req.params.id]);
   res.json(rows);
+});
+
+// כל הפרסומות לפי בניין (לתצוגה מאוחדת)
+app.get('/api/superadmin/all-ads', requireSuper, async (req, res) => {
+  const { rows: buildings } = await pool.query('SELECT id, name FROM buildings ORDER BY name');
+  const { rows: ads } = await pool.query('SELECT * FROM ads ORDER BY building_id, sort_order, id');
+  const byBuilding = {};
+  buildings.forEach(b => { byBuilding[b.id] = { id: b.id, name: b.name, ads: [] }; });
+  ads.forEach(a => {
+    if (byBuilding[a.building_id]) byBuilding[a.building_id].ads.push({
+      id: a.id, title: a.title, type: a.type, url: a.url, duration: a.duration,
+      active: a.active, start_date: a.start_date, end_date: a.end_date,
+      advertiser_name: a.advertiser_name, advertiser_phone: a.advertiser_phone
+    });
+  });
+  res.json(Object.values(byBuilding).filter(b => b.ads.length > 0));
 });
 
 // --- דפים ---

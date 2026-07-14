@@ -107,8 +107,8 @@
   .modal h2 { font-size: 1.1rem; margin-bottom: 20px; color: #fff; }
   .modal-close { float: left; background: transparent; border: none; color: #888; font-size: 1.4rem; cursor: pointer; line-height: 1; }
 
-  .ad-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid #2a2a5a; }
-  .ad-thumb { width: 70px; height: 50px; object-fit: cover; border-radius: 6px; background: #333; }
+  .media-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid #2a2a5a; }
+  .media-thumb { width: 70px; height: 50px; object-fit: cover; border-radius: 6px; background: #333; }
   .ad-info { flex: 1; }
   .ad-info strong { display: block; font-size: 0.95rem; }
   .ad-info small { color: #888; font-size: 0.8rem; }
@@ -384,10 +384,10 @@ async function loadModalAds() {
   const el = document.getElementById('adsModalList');
   if (!data.length) { el.innerHTML = '<div class="empty-state" style="padding:20px">אין פרסומות עדיין</div>'; return; }
   el.innerHTML = data.map(a => `
-    <div class="ad-row">
+    <div class="media-row">
       ${a.type === 'video'
-        ? `<video class="ad-thumb" src="${a.url}" muted></video>`
-        : a.url ? `<img class="ad-thumb" src="${a.url}" alt="">` : `<div class="ad-thumb"></div>`}
+        ? `<video class="media-thumb" src="${a.url}" muted></video>`
+        : a.url ? `<img class="media-thumb" src="${a.url}" alt="">` : `<div class="media-thumb"></div>`}
       <div class="ad-info">
         <strong>${a.title}</strong>
         <small>${a.duration}שנ' | ${a.active ? '✓ פעיל' : '⏸ מושהה'}</small>

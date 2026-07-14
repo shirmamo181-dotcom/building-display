@@ -99,9 +99,9 @@
 
   .media-card { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
   .media-thumb { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; background: #333; }
-  .ad-info { flex: 1; }
-  .ad-info strong { display: block; font-size: 1rem; margin-bottom: 4px; }
-  .ad-info small { color: #888; font-size: 0.85rem; }
+  .media-info { flex: 1; }
+  .media-info strong { display: block; font-size: 1rem; margin-bottom: 4px; }
+  .media-info small { color: #888; font-size: 0.85rem; }
   .toggle-btn { border: none; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem; font-family: inherit; }
   .toggle-btn.on { background: #2ecc71; color: #fff; }
   .toggle-btn.off { background: #444; color: #aaa; }
@@ -534,7 +534,7 @@ async function loadAds() {
         ${a.type === 'video'
           ? `<video class="media-thumb" src="${a.url}" muted></video>`
           : a.url ? `<img class="media-thumb" src="${a.url}" alt="">` : `<div class="media-thumb"></div>`}
-        <div class="ad-info">
+        <div class="media-info">
           <strong>${a.title}</strong>
           <small>${a.duration} שניות תצוגה | ${a.active ? 'פעיל' : 'מושהה'}</small>
         </div>

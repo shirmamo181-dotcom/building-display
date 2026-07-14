@@ -646,20 +646,58 @@ app.get('/api/superadmin/global-ads/:id/buildings', requireSuper, async (req, re
   res.json(rows);
 });
 
-// כל הפרסומות לפי בניין (לתצוגה מאוחדת)
+// כל הפרסומות לפי בניין (לתצוגה מאוחדת - מקומיות + גלובליות)
 app.get('/api/superadmin/all-ads', requireSuper, async (req, res) => {
   const { rows: buildings } = await pool.query('SELECT id, name FROM buildings ORDER BY name');
-  const { rows: ads } = await pool.query('SELECT * FROM ads ORDER BY building_id, sort_order, id');
+  const { rows: localAds } = await pool.query('SELECT * FROM ads ORDER BY building_id, sort_order, id');
+  const { rows: globalAds } = await pool.query(
+    `SELECT ga.id, ga.title, ga.type, ga.url, ga.duration, ga.start_date, ga.end_date,
+     ga.advertiser_name, ga.advertiser_phone, gab.building_id, gab.active AS gab_active, gab.sort_order AS gab_sort
+     FROM global_ads ga
+     JOIN global_ad_buildings gab ON gab.global_ad_id = ga.id
+     ORDER BY gab.building_id, gab.sort_order, ga.id`
+  );
   const byBuilding = {};
   buildings.forEach(b => { byBuilding[b.id] = { id: b.id, name: b.name, ads: [] }; });
-  ads.forEach(a => {
+  localAds.forEach(a => {
     if (byBuilding[a.building_id]) byBuilding[a.building_id].ads.push({
       id: a.id, title: a.title, type: a.type, url: a.url, duration: a.duration,
       active: a.active, start_date: a.start_date, end_date: a.end_date,
-      advertiser_name: a.advertiser_name, advertiser_phone: a.advertiser_phone
+      advertiser_name: a.advertiser_name, advertiser_phone: a.advertiser_phone,
+      sort_order: a.sort_order, is_global: false
     });
   });
+  globalAds.forEach(a => {
+    if (byBuilding[a.building_id]) byBuilding[a.building_id].ads.push({
+      id: a.id, title: a.title, type: a.type, url: a.url, duration: a.duration,
+      active: a.gab_active, start_date: a.start_date, end_date: a.end_date,
+      advertiser_name: a.advertiser_name, advertiser_phone: a.advertiser_phone,
+      sort_order: a.gab_sort, is_global: true
+    });
+  });
+  // sort each building's ads by sort_order
+  Object.values(byBuilding).forEach(b => {
+    b.ads.sort((x,y) => (x.sort_order||999)-(y.sort_order||999));
+  });
   res.json(Object.values(byBuilding).filter(b => b.ads.length > 0));
+});
+
+// מיון פרסומת גלובלית בתוך בניין
+app.post('/api/superadmin/buildings/:id/global-ads/reorder', requireSuper, async (req, res) => {
+  const { gid, direction } = req.body;
+  const { rows } = await pool.query(
+    'SELECT * FROM global_ad_buildings WHERE building_id=$1 ORDER BY sort_order, global_ad_id',
+    [req.params.id]
+  );
+  const idx = rows.findIndex(r => r.global_ad_id == gid);
+  if (idx === -1) return res.json({ ok: false });
+  const ni = direction === 'up' ? idx - 1 : idx + 1;
+  if (ni < 0 || ni >= rows.length) return res.json({ ok: false });
+  await pool.query('UPDATE global_ad_buildings SET sort_order=$1 WHERE global_ad_id=$2 AND building_id=$3',
+    [ni, rows[idx].global_ad_id, req.params.id]);
+  await pool.query('UPDATE global_ad_buildings SET sort_order=$1 WHERE global_ad_id=$2 AND building_id=$3',
+    [idx, rows[ni].global_ad_id, req.params.id]);
+  res.json({ ok: true });
 });
 
 // --- דפים ---

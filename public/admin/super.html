@@ -493,7 +493,14 @@ async function loadModalAds() {
           ${!a.is_global ? `
             <button class="sort-btn" onclick="reorderModalAd(${a.id},'up')" ${isFirst?'disabled':''}>▲</button>
             <button class="sort-btn" onclick="reorderModalAd(${a.id},'down')" ${isLast?'disabled':''}>▼</button>
-          ` : '<div style="width:26px"></div>'}
+          ` : (() => {
+            const globals = data.filter(x => x.is_global);
+            const gi = globals.indexOf(a);
+            return `
+              <button class="sort-btn" onclick="reorderGlobalInBuilding(${a.id},'up')" ${gi===0?'disabled':''}>▲</button>
+              <button class="sort-btn" onclick="reorderGlobalInBuilding(${a.id},'down')" ${gi===globals.length-1?'disabled':''}>▼</button>
+            `;
+          })()}
         </div>
         ${a.type === 'video'
           ? `<video class="media-thumb" src="${a.url}" muted></video>`
@@ -613,6 +620,14 @@ async function reorderModalAd(adId, direction) {
   await fetch('/api/superadmin/buildings/' + currentAdsBid + '/ads/reorder', {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ adId, direction })
+  });
+  loadModalAds();
+}
+
+async function reorderGlobalInBuilding(gid, direction) {
+  await fetch('/api/superadmin/buildings/' + currentAdsBid + '/global-ads/reorder', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ gid, direction })
   });
   loadModalAds();
 }

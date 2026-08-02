@@ -92,6 +92,7 @@ async function login() {
     const data = await res.json();
     if (res.ok) {
       if (data.role === 'superadmin') location.href = '/admin';
+      else if (data.role === 'client') location.href = '/select-building';
       else location.href = '/admin/' + data.buildingId;
     } else {
       err.textContent = data.error || 'שגיאה בכניסה';

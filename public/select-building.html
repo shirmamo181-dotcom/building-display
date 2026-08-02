@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>בחירת בניין</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: linear-gradient(160deg, #0a0a1a 0%, #0f0f2e 50%, #080818 100%);
+    color: #e0e0e0; font-family: 'Heebo', Arial, sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  }
+  .wrap { width: 100%; max-width: 480px; padding: 24px; }
+  .logo { text-align: center; margin-bottom: 36px; }
+  .logo-icon { font-size: 2.8rem; margin-bottom: 10px; }
+  .logo h1 { font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: 1px; }
+  .logo p { font-size: 0.85rem; color: #666; margin-top: 4px; }
+  .box {
+    background: #1a1a3e; border: 1px solid #2a2a5a;
+    border-radius: 20px; padding: 40px 36px;
+  }
+  .box h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: #fff; }
+  .box p { font-size: 0.85rem; color: #888; margin-bottom: 28px; }
+  .building-btn {
+    display: flex; align-items: center; gap: 14px;
+    width: 100%; padding: 18px 20px; margin-bottom: 12px;
+    background: #0f0f2e; border: 1px solid #2a2a5a; border-radius: 12px;
+    color: #e0e0e0; font-size: 1rem; font-family: inherit;
+    cursor: pointer; text-align: right; transition: border-color 0.2s, background 0.2s;
+  }
+  .building-btn:hover { border-color: #4a4aff; background: #13133a; }
+  .building-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .building-name { flex: 1; font-weight: 600; }
+  .arrow { color: #4a4aff; font-size: 1.1rem; flex-shrink: 0; }
+  .logout-link {
+    display: block; text-align: center; margin-top: 24px;
+    font-size: 0.82rem; color: #555; cursor: pointer;
+    text-decoration: underline;
+  }
+  .logout-link:hover { color: #888; }
+  .loading { text-align: center; color: #555; padding: 40px; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <div class="logo-icon">◈</div>
+    <h1>מערכת מסכי בניין</h1>
+    <p>Building Display System</p>
+  </div>
+  <div class="box">
+    <h2>בחר בניין לניהול</h2>
+    <p>יש לך גישה למספר בניינים. בחר את הבניין שברצונך לנהל.</p>
+    <div id="buildingList"><div class="loading">טוען...</div></div>
+  </div>
+  <span class="logout-link" onclick="logout()">התנתק</span>
+</div>
+<script>
+async function load() {
+  const res = await fetch('/api/client/buildings');
+  if (!res.ok) { location.href = '/login'; return; }
+  const buildings = await res.json();
+  if (!buildings.length) { location.href = '/login'; return; }
+  if (buildings.length === 1) { location.href = '/admin/' + buildings[0].id; return; }
+  const list = document.getElementById('buildingList');
+  list.innerHTML = buildings.map(b => `
+    <button class="building-btn" onclick="location.href='/admin/${b.id}'">
+      <span class="building-icon">🏢</span>
+      <span class="building-name">${b.name}</span>
+      <span class="arrow">←</span>
+    </button>
+  `).join('');
+}
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  location.href = '/login';
+}
+load();
+</script>
+</body>
+</html>

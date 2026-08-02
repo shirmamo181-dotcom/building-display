@@ -63,6 +63,12 @@ async function initDB() {
       building_name TEXT DEFAULT 'מרכז עסקים',
       theme         TEXT DEFAULT 'weather-news'
     );
+    CREATE TABLE IF NOT EXISTS clients (
+      id            TEXT PRIMARY KEY,
+      password_hash TEXT NOT NULL,
+      name          TEXT DEFAULT '',
+      email         TEXT DEFAULT ''
+    );
     CREATE TABLE IF NOT EXISTS themes (
       id          TEXT PRIMARY KEY,
       name        TEXT NOT NULL,
@@ -92,6 +98,9 @@ async function initDB() {
       UNIQUE(global_ad_id, building_id)
     );
   `);
+
+  // Migrate buildings table
+  try { await pool.query("ALTER TABLE buildings ADD COLUMN IF NOT EXISTS client_id TEXT REFERENCES clients(id) ON DELETE SET NULL"); } catch(e) {}
 
   // Migrate ads table
   const adsCols = ['sort_order INTEGER DEFAULT 999','start_date DATE','end_date DATE',
@@ -149,15 +158,21 @@ function requireSuper(req, res, next) {
   if (req.session.superAdmin) return next();
   res.status(401).json({ error: 'נדרשת כניסה כמנהל-על' });
 }
-function requireBuilding(req, res, next) {
+async function requireBuilding(req, res, next) {
   const bid = req.params.bid;
   if (req.session.superAdmin || req.session.buildingId === bid) return next();
+  if (req.session.clientId) {
+    const { rows } = await pool.query('SELECT id FROM buildings WHERE id=$1 AND client_id=$2', [bid, req.session.clientId]);
+    if (rows[0]) return next();
+  }
   res.status(401).json({ error: 'אין הרשאה' });
 }
 async function requireAdsAuth(req, res, next) {
   const bid = req.params.bid;
   if (req.session.superAdmin) return next();
-  if (req.session.buildingId !== bid) return res.status(401).json({ error: 'אין הרשאה' });
+  const isBuilding = req.session.buildingId === bid;
+  const isClient = req.session.clientId && !!(await pool.query('SELECT id FROM buildings WHERE id=$1 AND client_id=$2', [bid, req.session.clientId])).rows[0];
+  if (!isBuilding && !isClient) return res.status(401).json({ error: 'אין הרשאה' });
   const { rows } = await pool.query('SELECT can_manage_ads FROM buildings WHERE id=$1', [bid]);
   if (rows[0]?.can_manage_ads) return next();
   res.status(403).json({ error: 'ניהול פרסומות אינו מופעל לבניין זה' });
@@ -167,13 +182,25 @@ async function requireAdsAuth(req, res, next) {
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   if (username === SUPER_USER && bcrypt.compareSync(password, SUPER_PASS_HASH)) {
-    req.session.superAdmin = true; req.session.buildingId = null;
+    req.session.superAdmin = true; req.session.buildingId = null; req.session.clientId = null;
     return res.json({ ok: true, role: 'superadmin' });
   }
+  // Check client accounts
+  const { rows: clientRows } = await pool.query('SELECT * FROM clients WHERE id=$1', [username]);
+  if (clientRows[0] && bcrypt.compareSync(password, clientRows[0].password_hash)) {
+    req.session.clientId = clientRows[0].id; req.session.buildingId = null; req.session.superAdmin = false;
+    const { rows: bldgs } = await pool.query('SELECT id, name FROM buildings WHERE client_id=$1 ORDER BY name', [clientRows[0].id]);
+    if (bldgs.length === 1) {
+      req.session.buildingId = bldgs[0].id;
+      return res.json({ ok: true, role: 'building', buildingId: bldgs[0].id });
+    }
+    return res.json({ ok: true, role: 'client', buildings: bldgs });
+  }
+  // Check individual building accounts
   const { rows } = await pool.query('SELECT * FROM buildings WHERE id=$1', [username]);
   const b = rows[0];
   if (b && bcrypt.compareSync(password, b.password_hash)) {
-    req.session.buildingId = b.id; req.session.superAdmin = false;
+    req.session.buildingId = b.id; req.session.superAdmin = false; req.session.clientId = null;
     return res.json({ ok: true, role: 'building', buildingId: b.id });
   }
   res.status(401).json({ error: 'שם משתמש או סיסמה שגויים' });
@@ -181,8 +208,17 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/logout', (req, res) => { req.session.destroy(); res.json({ ok: true }); });
 app.get('/api/me', (req, res) => {
   if (req.session.superAdmin) return res.json({ role: 'superadmin' });
-  if (req.session.buildingId) return res.json({ role: 'building', buildingId: req.session.buildingId });
+  if (req.session.buildingId) return res.json({ role: 'building', buildingId: req.session.buildingId, clientId: req.session.clientId || null });
+  if (req.session.clientId) return res.json({ role: 'client', clientId: req.session.clientId });
   res.json({ role: null });
+});
+
+app.get('/api/client/buildings', async (req, res) => {
+  if (!req.session.clientId && !req.session.superAdmin) return res.status(401).json({ error: 'אין הרשאה' });
+  const cid = req.session.clientId;
+  if (!cid) return res.json([]);
+  const { rows } = await pool.query('SELECT id, name FROM buildings WHERE client_id=$1 ORDER BY name', [cid]);
+  res.json(rows);
 });
 
 // --- חדשות (Ynet RSS) ---
@@ -700,12 +736,59 @@ app.post('/api/superadmin/buildings/:id/global-ads/reorder', requireSuper, async
   res.json({ ok: true });
 });
 
+// --- לקוחות (מנהל-על) ---
+app.get('/api/superadmin/clients', requireSuper, async (req, res) => {
+  const { rows: clients } = await pool.query('SELECT id, name, email FROM clients ORDER BY name');
+  const { rows: bldgs }   = await pool.query('SELECT id, name, client_id FROM buildings WHERE client_id IS NOT NULL');
+  const map = {};
+  bldgs.forEach(b => { if (!map[b.client_id]) map[b.client_id] = []; map[b.client_id].push({ id: b.id, name: b.name }); });
+  res.json(clients.map(c => ({ ...c, buildings: map[c.id] || [] })));
+});
+
+app.post('/api/superadmin/clients', requireSuper, async (req, res) => {
+  const { id, password, name, email } = req.body;
+  if (!id || !password) return res.status(400).json({ error: 'נא למלא מזהה וסיסמה' });
+  const { rows: ex } = await pool.query('SELECT id FROM clients WHERE id=$1', [id]);
+  if (ex.length) return res.status(400).json({ error: 'מזהה לקוח כבר קיים' });
+  await pool.query('INSERT INTO clients (id, password_hash, name, email) VALUES ($1,$2,$3,$4)',
+    [id, bcrypt.hashSync(password, 10), name || '', email || '']);
+  res.json({ ok: true, id });
+});
+
+app.put('/api/superadmin/clients/:id', requireSuper, async (req, res) => {
+  const { name, email, password } = req.body;
+  if (password) {
+    await pool.query('UPDATE clients SET name=$1, email=$2, password_hash=$3 WHERE id=$4',
+      [name||'', email||'', bcrypt.hashSync(password, 10), req.params.id]);
+  } else {
+    await pool.query('UPDATE clients SET name=$1, email=$2 WHERE id=$3', [name||'', email||'', req.params.id]);
+  }
+  res.json({ ok: true });
+});
+
+app.delete('/api/superadmin/clients/:id', requireSuper, async (req, res) => {
+  await pool.query('UPDATE buildings SET client_id=NULL WHERE client_id=$1', [req.params.id]);
+  await pool.query('DELETE FROM clients WHERE id=$1', [req.params.id]);
+  res.json({ ok: true });
+});
+
+// שיוך בניין ללקוח
+app.post('/api/superadmin/clients/:id/assign-building', requireSuper, async (req, res) => {
+  await pool.query('UPDATE buildings SET client_id=$1 WHERE id=$2', [req.params.id, req.body.buildingId]);
+  res.json({ ok: true });
+});
+app.post('/api/superadmin/clients/:id/unassign-building', requireSuper, async (req, res) => {
+  await pool.query('UPDATE buildings SET client_id=NULL WHERE id=$1 AND client_id=$2', [req.body.buildingId, req.params.id]);
+  res.json({ ok: true });
+});
+
 // --- דפים ---
-app.get('/login',       (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/screen/:bid', (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen.html')));
-app.get('/admin',       (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'super.html')));
-app.get('/admin/:bid',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
-app.get('/screen',      (req, res) => res.redirect('/screen/203991203'));
+app.get('/login',             (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/select-building',   (req, res) => res.sendFile(path.join(__dirname, 'public', 'select-building.html')));
+app.get('/screen/:bid',       (req, res) => res.sendFile(path.join(__dirname, 'public', 'screen.html')));
+app.get('/admin',             (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'super.html')));
+app.get('/admin/:bid',        (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
+app.get('/screen',            (req, res) => res.redirect('/screen/203991203'));
 
 app.use(express.static('public'));
 

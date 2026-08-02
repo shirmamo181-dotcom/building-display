@@ -203,6 +203,7 @@
   <div class="tab" onclick="showTab('add',this)">➕ הוספת בניין</div>
   <div class="tab" onclick="showTab('themes',this)">🎨 ערכות נושא</div>
   <div class="tab" onclick="showTab('global-ads',this)">📢 פרסומות גלובלי</div>
+  <div class="tab" onclick="showTab('clients',this)">👥 לקוחות</div>
 </div>
 
 <div class="content">
@@ -264,6 +265,23 @@
       </div>
       <div id="allAdsByBuilding"></div>
     </div>
+  </div>
+
+  <!-- לקוחות -->
+  <div class="section" id="section-clients">
+    <div class="section-title">ניהול לקוחות (כניסה רב-בניינית)</div>
+    <div class="add-form">
+      <h3>הוספת לקוח חדש</h3>
+      <div class="form-grid">
+        <input type="text" id="clientId" placeholder="מזהה לקוח (שם משתמש)">
+        <input type="password" id="clientPw" placeholder="סיסמה">
+        <input type="text" id="clientName" placeholder="שם הלקוח">
+        <input type="email" id="clientEmail" placeholder="מייל (אופציונלי)">
+      </div>
+      <button class="btn-add" onclick="addClient()">+ הוסף לקוח</button>
+      <div class="error-msg" id="clientAddError"></div>
+    </div>
+    <div id="clientsList"></div>
   </div>
 
   <!-- הוספת בניין -->
@@ -351,6 +369,7 @@ function showTab(name, el) {
   if (name === 'buildings') loadBuildings();
   if (name === 'themes') loadThemesEditor();
   if (name === 'global-ads') loadGlobalAdsTab();
+  if (name === 'clients') loadClientsTab();
 }
 
 async function loadBuildings() {
@@ -888,6 +907,118 @@ async function saveThemes() {
     msg.textContent = 'שגיאה בשמירה';
   }
   setTimeout(() => { msg.textContent = ''; }, 4000);
+}
+
+// --- לקוחות ---
+let allBuildingsForClients = [];
+
+async function loadClientsTab() {
+  const [clients, buildings] = await Promise.all([
+    fetch('/api/superadmin/clients').then(r => r.json()),
+    fetch('/api/superadmin/buildings').then(r => r.json())
+  ]);
+  allBuildingsForClients = buildings;
+  const el = document.getElementById('clientsList');
+  if (!clients.length) { el.innerHTML = '<div class="empty-state">אין לקוחות עדיין</div>'; return; }
+  el.innerHTML = clients.map(c => `
+    <div class="building-card" id="client-card-${c.id}">
+      <div class="building-header">
+        <div class="building-name">👥 ${c.name || c.id}</div>
+        <div class="building-id">${c.id}</div>
+        ${c.email ? `<div class="building-date">${c.email}</div>` : ''}
+      </div>
+      <div style="margin-bottom:10px;font-size:0.85rem;color:#888;">
+        בניינים משויכים: ${c.buildings && c.buildings.length
+          ? c.buildings.map(b => `<span style="background:#1e1e4a;border:1px solid #3a3a7a;border-radius:6px;padding:2px 10px;margin-left:6px;color:#a0a0ff">${b.name}</span>`).join('')
+          : '<span style="color:#555">אין בניינים</span>'}
+      </div>
+      <div class="building-actions">
+        <button class="btn-action btn-edit-b" onclick="toggleClientEdit('${c.id}')">✏️ ערוך</button>
+        <button class="btn-action btn-toggle" onclick="openAssignBuilding('${c.id}')">🏢 שייך בניין</button>
+        <button class="btn-action btn-del-b" onclick="deleteClient('${c.id}')">🗑️ מחק</button>
+      </div>
+      <div class="inline-edit-form" id="client-edit-${c.id}">
+        <input type="text" placeholder="שם" id="cedit-name-${c.id}" value="${c.name||''}">
+        <input type="email" placeholder="מייל" id="cedit-email-${c.id}" value="${c.email||''}">
+        <input type="password" placeholder="סיסמה חדשה (השאר ריק לשמור)" id="cedit-pw-${c.id}">
+        <button class="btn-save" onclick="saveClientEdit('${c.id}')">שמור</button>
+        <button class="btn-cancel" onclick="toggleClientEdit('${c.id}')">ביטול</button>
+      </div>
+      <!-- שיוך בניין -->
+      <div class="inline-edit-form" id="client-assign-${c.id}" style="flex-direction:column;gap:10px">
+        <div style="font-size:0.85rem;color:#aaa;">בחר בניין לשיוך / ביטול שיוך:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${buildings.map(b => {
+            const assigned = c.buildings && c.buildings.some(x => x.id === b.id);
+            return `<button onclick="toggleAssignBuilding('${c.id}','${b.id}',${assigned})"
+              style="padding:6px 14px;border-radius:8px;border:1px solid ${assigned?'#6a4aff':'#444'};
+              background:${assigned?'rgba(106,74,255,0.15)':'transparent'};color:${assigned?'#a0a0ff':'#aaa'};
+              cursor:pointer;font-family:inherit;font-size:0.85rem" id="assign-btn-${c.id}-${b.id}">
+              ${assigned?'✓ ':''} ${b.name}
+            </button>`;
+          }).join('')}
+        </div>
+        <button class="btn-cancel" onclick="openAssignBuilding('${c.id}')">סגור</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleClientEdit(id) {
+  const el = document.getElementById('client-edit-' + id);
+  el.classList.toggle('open');
+  document.getElementById('client-assign-' + id).classList.remove('open');
+}
+
+function openAssignBuilding(id) {
+  const el = document.getElementById('client-assign-' + id);
+  el.classList.toggle('open');
+  document.getElementById('client-edit-' + id).classList.remove('open');
+}
+
+async function saveClientEdit(id) {
+  const name  = document.getElementById('cedit-name-' + id).value.trim();
+  const email = document.getElementById('cedit-email-' + id).value.trim();
+  const pw    = document.getElementById('cedit-pw-' + id).value;
+  const body  = { name, email };
+  if (pw) body.password = pw;
+  await fetch('/api/superadmin/clients/' + id, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  loadClientsTab();
+}
+
+async function addClient() {
+  const id    = document.getElementById('clientId').value.trim();
+  const pw    = document.getElementById('clientPw').value;
+  const name  = document.getElementById('clientName').value.trim();
+  const email = document.getElementById('clientEmail').value.trim();
+  const err   = document.getElementById('clientAddError');
+  err.textContent = '';
+  const res = await fetch('/api/superadmin/clients', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ id, password: pw, name, email })
+  });
+  const data = await res.json();
+  if (!res.ok) { err.textContent = data.error || 'שגיאה'; return; }
+  document.getElementById('clientId').value = '';
+  document.getElementById('clientPw').value = '';
+  document.getElementById('clientName').value = '';
+  document.getElementById('clientEmail').value = '';
+  loadClientsTab();
+}
+
+async function deleteClient(id) {
+  if (!confirm('למחוק לקוח ' + id + '?')) return;
+  await fetch('/api/superadmin/clients/' + id, { method: 'DELETE' });
+  loadClientsTab();
+}
+
+async function toggleAssignBuilding(clientId, buildingId, isAssigned) {
+  const endpoint = isAssigned ? 'unassign-building' : 'assign-building';
+  await fetch(`/api/superadmin/clients/${clientId}/${endpoint}`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ buildingId })
+  });
+  loadClientsTab();
 }
 
 init();

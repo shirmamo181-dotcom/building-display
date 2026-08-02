@@ -188,13 +188,10 @@ app.post('/api/login', async (req, res) => {
   // Check client accounts
   const { rows: clientRows } = await pool.query('SELECT * FROM clients WHERE id=$1', [username]);
   if (clientRows[0] && bcrypt.compareSync(password, clientRows[0].password_hash)) {
-    req.session.clientId = clientRows[0].id; req.session.buildingId = null; req.session.superAdmin = false;
+    req.session.clientId = clientRows[0].id; req.session.superAdmin = false;
     const { rows: bldgs } = await pool.query('SELECT id, name FROM buildings WHERE client_id=$1 ORDER BY name', [clientRows[0].id]);
-    if (bldgs.length === 1) {
-      req.session.buildingId = bldgs[0].id;
-      return res.json({ ok: true, role: 'building', buildingId: bldgs[0].id });
-    }
-    return res.json({ ok: true, role: 'client', buildings: bldgs });
+    req.session.buildingId = bldgs.length ? bldgs[0].id : null;
+    return res.json({ ok: true, role: 'building', buildingId: req.session.buildingId });
   }
   // Check individual building accounts
   const { rows } = await pool.query('SELECT * FROM buildings WHERE id=$1', [username]);
@@ -211,6 +208,15 @@ app.get('/api/me', (req, res) => {
   if (req.session.buildingId) return res.json({ role: 'building', buildingId: req.session.buildingId, clientId: req.session.clientId || null });
   if (req.session.clientId) return res.json({ role: 'client', clientId: req.session.clientId });
   res.json({ role: null });
+});
+
+app.post('/api/client/switch-building', async (req, res) => {
+  if (!req.session.clientId) return res.status(401).json({ error: 'אין הרשאה' });
+  const { buildingId } = req.body;
+  const { rows } = await pool.query('SELECT id FROM buildings WHERE id=$1 AND client_id=$2', [buildingId, req.session.clientId]);
+  if (!rows[0]) return res.status(403).json({ error: 'בניין לא שייך ללקוח זה' });
+  req.session.buildingId = buildingId;
+  res.json({ ok: true });
 });
 
 app.get('/api/client/buildings', async (req, res) => {

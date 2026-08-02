@@ -169,9 +169,10 @@
       <h1>◈ פאנל ניהול</h1>
       <div class="building-tag" id="buildingTag"></div>
     </div>
-    <div class="topbar-btns">
-      <button onclick="toggleNameEdit()">✏️ שנה שם</button>
-      <button id="btnSelectBuilding" style="display:none" onclick="location.href='/select-building'">🏢 בחר בניין אחר</button>
+    <div class="topbar-btns" style="position:relative">
+      <button id="btnRename" onclick="toggleNameEdit()">✏️ שנה שם</button>
+      <button id="btnSwitchBuilding" style="display:none" onclick="toggleBuildingPicker()">🏢 שנה בניין</button>
+      <div id="buildingPicker" style="display:none;position:absolute;top:calc(100% + 8px);left:0;background:#1a1a3e;border:1px solid #4a4aff;border-radius:10px;min-width:200px;z-index:300;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.5)"></div>
       <button onclick="logout()">יציאה</button>
     </div>
   </div>
@@ -366,13 +367,50 @@ let canManageAds = false;
 
 async function init() {
   const me = await fetch('/api/me').then(r => r.json());
-  if (!me.role) { location.href = '/login'; return; }
-  if (me.role === 'client') { location.href = '/select-building'; return; }
+  if (!me.role || me.role === 'client') { location.href = '/login'; return; }
   if (me.role === 'building' && me.buildingId !== BID) { location.href = '/login'; return; }
-  if (me.clientId) document.getElementById('btnSelectBuilding').style.display = '';
+  if (me.clientId) {
+    document.getElementById('btnRename').style.display = 'none';
+    document.getElementById('btnSwitchBuilding').style.display = '';
+  }
   document.getElementById('mainScreen').style.display = 'block';
   loadAll();
 }
+
+let clientBuildings = null;
+async function toggleBuildingPicker() {
+  const picker = document.getElementById('buildingPicker');
+  if (picker.style.display !== 'none') { picker.style.display = 'none'; return; }
+  if (!clientBuildings) {
+    clientBuildings = await fetch('/api/client/buildings').then(r => r.json());
+  }
+  picker.innerHTML = clientBuildings.map(b =>
+    `<div onclick="switchBuilding('${b.id}')" style="padding:12px 18px;cursor:pointer;font-size:0.9rem;
+     color:${b.id===BID?'#a0a0ff':'#e0e0e0'};background:${b.id===BID?'rgba(106,74,255,0.15)':'transparent'};
+     border-bottom:1px solid #2a2a5a;transition:background 0.15s"
+     onmouseover="this.style.background='rgba(74,74,255,0.2)'"
+     onmouseout="this.style.background='${b.id===BID?'rgba(106,74,255,0.15)':'transparent'}'">
+     ${b.id===BID?'✓ ':''} ${b.name}</div>`
+  ).join('');
+  picker.style.display = 'block';
+}
+
+async function switchBuilding(bid) {
+  if (bid === BID) { document.getElementById('buildingPicker').style.display = 'none'; return; }
+  await fetch('/api/client/switch-building', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ buildingId: bid })
+  });
+  location.href = '/admin/' + bid;
+}
+
+document.addEventListener('click', e => {
+  const picker = document.getElementById('buildingPicker');
+  const btn = document.getElementById('btnSwitchBuilding');
+  if (picker && btn && !picker.contains(e.target) && e.target !== btn) {
+    picker.style.display = 'none';
+  }
+});
 
 async function logout() {
   await fetch('/api/logout', { method: 'POST' });
